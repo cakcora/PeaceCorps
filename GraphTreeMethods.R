@@ -14,6 +14,7 @@ library(xgboost)
 library(igraph)
 
 useSubLevel <- TRUE
+dataDir <- "/home/jupiter/GraphML/"
 subSignatureFile <- "graphMlResultsAnalysisSub.txt"
 powSignatureFile <- "graphMlResultsAnalysisPow.txt"
 whichSignatureFile <- if (useSubLevel) subSignatureFile else powSignatureFile
@@ -33,7 +34,7 @@ trainSize <- 0.8
 
 for (dataset in unique(data$dataset)) {
   datasetData <- data[data$dataset == dataset,]
-  idFile <- paste0("C:/Dropboxtan gelenler/Datasets/", dataset, "graph_labels")
+    idFile <- paste0(dataset, "graph_labels")
   labels <- read.table(idFile, quote = "\"", comment.char = "", sep = ",")
   colnames(labels) <- "label"
   # add graph id to the label data
@@ -48,7 +49,7 @@ for (dataset in unique(data$dataset)) {
     labels[ind,"label"]<-labels2[labels2$oldlabel==oldl,]$newlabel
   }
   for (bettiNumber in unique(datasetData$betti)) {
-    #message("processing ", dataset, " betti:", bettiNumber)
+      message("processing ", dataset, " betti:", bettiNumber)
     datasetSingleBettiData <- datasetData[datasetData$betti == bettiNumber,]
     maxLength <- 0
     # compute the length of the signature vector that we need to create for graphs of this dataset
@@ -63,7 +64,8 @@ for (dataset in unique(data$dataset)) {
     graphSignatureVectors <- data.frame()
     for (row in seq(seq_len(nrow(datasetSingleBettiData)))) {
       graphId <- (datasetSingleBettiData[row,]$graphId)
-      bfunct <- (datasetSingleBettiData[row,]$bettisignature)
+        bfunct <- as.character(datasetSingleBettiData[row,]$bettisignature)
+        message(graphId, bfunct)
       value <- strsplit(bfunct, split = " ")[[1]]
       # normalizing the signature
       value <- as.integer(value)
