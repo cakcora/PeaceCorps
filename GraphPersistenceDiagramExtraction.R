@@ -9,17 +9,17 @@ rm(list = ls())
 options(java.parameters = "-Xmx200g")
 
 # 3 Graph ML datasets
-p1 <- "GraphML/ENZYMES/ENZYMES."
-p2 <- "GraphML/proteins/proteins."
-p3 <- "GraphML/REDDIT-BINARY/REDDIT-BINARY."
-p4 <- "GraphML/IMDB-MULTI/IMDB-MULTI."
-p5 <- "GraphML/NCI1/NCI1."
-p6 <- "GraphML/IMDB-BINARY/IMDB-BINARY."
+p1 <- "/home/jupiter/GraphML/ENZYMES/ENZYMES."
+p2 <- "/home/jupiter/GraphML/proteins/proteins."
+p3 <- "/home/jupiter/GraphML/REDDIT-BINARY/REDDIT-BINARY."
+p4 <- "/home/jupiter/GraphML/IMDB-MULTI/IMDB-MULTI."
+p5 <- "/home/jupiter/GraphML/NCI1/NCI1."
+p6 <- "/home/jupiter/GraphML/IMDB-BINARY/IMDB-BINARY."
 
 # maximum simplex dimension
 maxDimension <- 3
 # node count thresholds to ignore a graph
-maxNodeCount <- 800
+maxNodeCount <- 1000
 minNodeCount <- 4
 
 subresultsFile <- "graphMlResultsSubFiltration.txt"
