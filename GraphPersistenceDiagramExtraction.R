@@ -1,4 +1,4 @@
-# Title     : PeaceCorps
+# Title     : GraphPersistenceDiagramExtraction
 # Objective : Extract sub level or power filtration persistence diagrams from graphs
 # requires dataset folders from http://networkrepository.com/labeled.php
 # Created by: Cuneyt Akcora
@@ -19,13 +19,15 @@ p6 <- "/home/jupiter/GraphML/IMDB-BINARY/IMDB-BINARY."
 # maximum simplex dimension
 maxDimension <- 3
 # node count thresholds to ignore a graph
-maxNodeCount <- 1000
 minNodeCount <- 4
 
 subresultsFile <- "graphMlResultsSubFiltration.txt"
 powresultsFile <- "graphMlResultsPowFiltration.txt"
 
 useSubLevel<-TRUE
+# if subLevel=FALSE, consider reducing maxNodeCount because power filtration 
+# does not work with large graphs
+maxNodeCount <- 6000
 
 #Check its existence
 if(useSubLevel<-TRUE){

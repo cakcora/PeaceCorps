@@ -1,4 +1,4 @@
-# Title     : PeaceCorps
+# Title     : GraphSignatureExtraction
 # Objective : Extract graph betti signatures from persistence diagrams
 # requires results from GraphPersistenceDiagramExtraction.R
 # Created by: Cuneyt Akcora
