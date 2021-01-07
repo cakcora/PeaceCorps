@@ -8,83 +8,148 @@ library(TDA)
 rm(list = ls())
 options(java.parameters = "-Xmx200g")
 
+
 # 3 Graph ML datasets
-p1 <- "/home/jupiter/GraphML/ENZYMES/ENZYMES."
-p2 <- "/home/jupiter/GraphML/proteins/proteins."
-p3 <- "/home/jupiter/GraphML/REDDIT-BINARY/REDDIT-BINARY."
-p4 <- "/home/jupiter/GraphML/IMDB-MULTI/IMDB-MULTI."
-p5 <- "/home/jupiter/GraphML/NCI1/NCI1."
-p6 <- "/home/jupiter/GraphML/IMDB-BINARY/IMDB-BINARY."
+dataPath <- "C:/Users/akkar/Documents/GraphML/"
+
+p1 <-  "ENZYMES/ENZYMES."
+p2 <-  "proteins/proteins."
+p3 <-  "REDDIT-BINARY/REDDIT-BINARY."
+p4 <-  "IMDB-MULTI/IMDB-MULTI."
+p5 <-  "NCI1/NCI1."
+p6 <-  "IMDB-BINARY/IMDB-BINARY."
 
 # maximum simplex dimension
 maxDimension <- 3
 # node count thresholds to ignore a graph
 minNodeCount <- 4
 
-subresultsFile <- "graphMlResultsSubFiltration.txt"
-powresultsFile <- "graphMlResultsPowFiltration.txt"
+nodeFeatures <- c("betweenness","closeness","authority","degree")
 
-useSubLevel<-TRUE
-# if subLevel=FALSE, consider reducing maxNodeCount because power filtration 
+subresultsFile <- "PDSubFiltration.txt"
+powresultsFile <- "PDPowFiltration.txt"
+
+useSubLevel <- TRUE
+# if subLevel=FALSE, consider reducing maxNodeCount because power filtration
 # does not work with large graphs
 maxNodeCount <- 6000
 
-#Check its existence
-if(useSubLevel<-TRUE){
-  if (file.exists(subresultsFile)) {
-    file.remove(subresultsFile)
-  }
-}else if (file.exists(powresultsFile)) {
-  file.remove(powresultsFile)
+computeNodeVals <- function(feature, thisGraph) {
+  if (feature == "degree") {
+    nodeValues <- apply(as_adjacency_matrix(thisGraph), 1, sum)
+    # normalize values. This remains unused because we had better results without normalization
+    #nodeValues=nodeValues/max(nodeValues)
+  }else if (feature == "authority") {
+    nodeValues = authority_score(thisGraph)$vector
+    nodeValues<-nodeValues/max(nnodeValues)
+     
+  }else if (feature == "closeness") {
+    nodeValues = closeness(thisGraph,normalized=TRUE)
+     
+  }else if (feature == "betweenness") {
+    nodeValues = betweenness(thisGraph,normalized=TRUE)
+    
+  }else {
+    message(nodeFeature," has not ben implemented as a node function in computeNodeVals()")
+    }
+  return(nodeValues)
 }
 
 
-for (path in c(p1, p3, p2, p6, p4, p5)) {
-  edgeFile <- paste0(path, "edges")
-  graphFile <- paste0(path, "graph_idx")
-  graphIdData <- read.table(graphFile, quote = "\"", comment.char = "", sep = ",")
-  allData <- read.table(edgeFile, quote = "\"", comment.char = "", sep = ",")
-  colnames(allData) <- c("source", "target")
-  for (graphId in unique(graphIdData$V1)) {
-    thisGraphNodes <- which(graphIdData$V1 == graphId)
-    edgeData <- allData[allData$source %in% thisGraphNodes | allData$target %in% thisGraphNodes,]
-    graph <- graph.data.frame(edgeData, directed = FALSE)
-    originalV <- vcount(graph)
-    # if the graph is not too small nor too big, compute filtration
-
-    if (originalV > minNodeCount && originalV < maxNodeCount) {
-      # below we use power filtration or sub/super level filtrations.
-      # You need to use one of them to created the filtration object
-      if(useSubLevel){
-        #1- sublevel filtration
-        F.values = apply(as_adjacency_matrix(graph), 1, sum) # F.value_i=amount sent by node i
-        #F.values=F.values/max(F.values) # normalize F.values
-        # for maxDimension=3 below means we are adding 0,1,2 simplices (nodes,edges,triangles) to our complex
-        cmplx <- cliques(as.undirected(graph), min = 0, max = maxDimension)
-        FltRips <- funFiltration(FUNvalues = F.values, cmplx = cmplx, sublevel = T) # Construct filtration using F.values
-      }else{
-        # 2 - power filtration
-        distanceMatrix <- shortest.paths(graph, v = V(graph), to = V(graph))
-        maxScale <- max(distanceMatrix)
-        FltRips<-ripsFiltration(distanceMatrix, maxdimension = maxDimension, maxscale = maxScale, dist = 'arbitrary',printProgress = FALSE)
+for(nodeFeature in nodeFeatures){
+  whichOutputFile <- if (useSubLevel){subresultsFile}else{powresultsFile}
+  whichOutputFile<-paste0(nodeFeature,whichOutputFile)
+  #Check its existence
+  if (file.exists(whichOutputFile)) {
+    file.remove(whichOutputFile)
+  }
+  
+  for (path in c(p1, p2, p3, p4, p5, p6)) {
+    edgeFile <- paste0(dataPath, path, "edges")
+    graphFile <- paste0(dataPath, path, "graph_idx")
+    graphIdData <-
+      read.table(graphFile,
+                 quote = "\"",
+                 comment.char = "",
+                 sep = ",")
+    allData <-
+      read.table(edgeFile,
+                 quote = "\"",
+                 comment.char = "",
+                 sep = ",")
+    colnames(allData) <- c("source", "target")
+    message("Processing ",path," for feature ",nodeFeature)
+    for (graphId in unique(graphIdData$V1)) {
+      thisGraphNodes <- which(graphIdData$V1 == graphId)
+      edgeData <-
+        allData[allData$source %in% thisGraphNodes |
+                  allData$target %in% thisGraphNodes, ]
+      graph <- graph.data.frame(edgeData, directed = FALSE)
+      originalV <- vcount(graph)
+      # if the graph is not too small nor too big, compute filtration
+      
+      if (originalV > minNodeCount && originalV < maxNodeCount) {
+        # below we use power filtration or sub/super level filtrations.
+        # You need to use one of them to created the filtration object
+        if (useSubLevel) {
+          #1- sublevel filtration
+          F.values = computeNodeVals(nodeFeature, graph)
+          
+          # for maxDimension=3 below means we are adding 0,1,2 simplices (nodes,edges,triangles) to our complex
+          cmplx <-
+            cliques(as.undirected(graph), min = 0, max = maxDimension)
+          # use sublevel=T for sublevel, sublevel=F for superlevel filtration
+          FltRips <-
+            funFiltration(FUNvalues = F.values,
+                          cmplx = cmplx,
+                          sublevel = T) # Construct filtration using F.values
+        } else{
+          # 2 - power filtration
+          distanceMatrix <-
+            shortest.paths(graph, v = V(graph), to = V(graph))
+          maxScale <- max(distanceMatrix)
+          FltRips <-
+            ripsFiltration(
+              distanceMatrix,
+              maxdimension = maxDimension,
+              maxscale = maxScale,
+              dist = 'arbitrary',
+              printProgress = FALSE
+            )
+        }
+        #extract the persistence diagram
+        persistenceDiagram <-
+          filtrationDiag(filtration = FltRips, maxdimension = maxDimension)$diagram
+        
+        #extract betti number
+        b0OrigGraph <- sum(persistenceDiagram[, 1] == 0)
+        b1OrigGraph <- sum(persistenceDiagram[, 1] == 1)
+        b2OrigGraph <- sum(persistenceDiagram[, 1] == 2)
+        
+        #extract birth and death times
+        pd2 <-
+          cbind(persistenceDiagram,
+                GraphId = graphId,
+                dataset = path)
+        
+        write.table(
+          pd2,
+          file = whichOutputFile,
+          sep = "\t",
+          row.names = FALSE,
+          col.names = FALSE,
+          append = T,
+          quote = FALSE
+        )
+        
+      } else {
+        message("Ignoring ",
+                path,
+                " graph ",
+                graphId,
+                " Node count:",
+                originalV)
       }
-      #extract the persistence diagram
-      persistenceDiagram <- filtrationDiag(filtration = FltRips, maxdimension = maxDimension)$diagram
-
-      #extract betti number
-      b0OrigGraph <- sum(persistenceDiagram[, 1] == 0)
-      b1OrigGraph <- sum(persistenceDiagram[, 1] == 1)
-      b2OrigGraph <- sum(persistenceDiagram[, 1] == 2)
-
-      #extract birth and death times
-      pd2 <- cbind(persistenceDiagram, GraphId = graphId, dataset = path)
-      whichFile<-if(useSubLevel) subresultsFile else powresultsFile
-      write.table(pd2, file = whichFile, sep = "\t", row.names = FALSE, col.names = FALSE, append = T, quote = FALSE)
-
-      message(path, "\t", graphId, "\t", originalV, "\t",
-              b0OrigGraph, "\t", b1OrigGraph, "\t")
-    }else {
-      message("Ignoring ", path, " graph ", graphId, " Node count:", originalV)
     }
   }
 }
