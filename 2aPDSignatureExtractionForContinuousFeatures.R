@@ -13,7 +13,7 @@ useSubLevel <- TRUE
 subresultsFile <- "PDSubFiltration.txt"
 powresultsFile <- "PDPowFiltration.txt"
 
-nodeFeatures <- c("betweenness","authority")
+nodeFeatures <- c("betweenness","authority","closeness","eccentricity")
 
 for(nodeFeature in nodeFeatures){
   whichInputFile <- if (useSubLevel)  subresultsFile else powresultsFile

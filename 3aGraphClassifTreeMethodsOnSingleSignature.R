@@ -2,6 +2,7 @@
 # Objective : Run Random Forest and XGBoost classifiers on betti signature to
 # predict graph labels.
 # requires results from PDSignatureExtractionForDiscreteFeatures.R
+# and PDSignatureExtractionForContinuousFeatures.R
 # Created by: Cuneyt Akcora
 # Created on: 2020-12-18
 rm(list = ls())
@@ -17,7 +18,7 @@ useSubLevel <- TRUE
 subSignatureFile <- "graphMlResultsAnalysisSub.txt"
 powSignatureFile <- "graphMlResultsAnalysisPow.txt"
 dataPath<-"C:/Users/akkar/Documents/GraphML/"
-nodeFeatures <- c("degree","betweenness","closeness","authority")
+nodeFeatures <- c("eccentricity","betweenness","closeness","degree","authority")
 
 for(nodeFeature in nodeFeatures){
   whichSignatureFile <- if (useSubLevel) subSignatureFile else powSignatureFile
@@ -54,7 +55,6 @@ for(nodeFeature in nodeFeatures){
       labels[ind,"label"]<-labels2[labels2$oldlabel==oldl,]$newlabel
     }
     for (bettiNumber in unique(datasetData$betti)) {
-      message("processing ", dataset, " betti:", bettiNumber, " feature ",nodeFeature)
       datasetSingleBettiData <- datasetData[datasetData$betti == bettiNumber,]
       maxLength <- 0
       # compute the length of the signature vector that we need to create for graphs of this dataset
@@ -104,7 +104,6 @@ for(nodeFeature in nodeFeatures){
         
       }
       # message(dataset, " ", bettiNumber, " we have at most ", maxLength, " betti values in a signature")
-      message(dataset, " ", bettiNumber, " if we use ", vectorLength, " length, we ignore some signature values in ", truncatedSignatureCount, " graphs", " of total ", nrow(datasetSingleBettiData))
       
       # Classification starts at this point!
       # we do not need dataset name in classification, do not ask me why I put it in the 1st place.
@@ -127,7 +126,7 @@ for(nodeFeature in nodeFeatures){
       # predict labels of test set graphs
       predictedLabels <- predict(rf, test)
       rfAccuracy <- sum(test$label == predictedLabels) / nrow(test)
-      message("Betti",bettiNumber,"\t",dataset, " RFaccuracy: ", rfAccuracy)
+      message(dataset, "\t",nodeFeature,"\t",bettiNumber,"\trf\t", rfAccuracy)
       
       # xgboost classifier
       # just to prevent data contamination, we recreate trainign and test datasets with the same indices
@@ -151,7 +150,7 @@ for(nodeFeature in nodeFeatures){
       # convert the probabilities to softmax labels
       pred_labels <- max.col(pred) - 1
       xgboostAccuracy<- sum(pred_labels == test$label)/length(test$label)
-      message("Betti",bettiNumber,"\t",dataset, " XGBoostaccuracy: ", xgboostAccuracy)
+      message(dataset, "\t",nodeFeature,"\t",bettiNumber,"\txgboost\t", xgboostAccuracy)
       
       
       

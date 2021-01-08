@@ -24,7 +24,7 @@ maxDimension <- 3
 # node count thresholds to ignore a graph
 minNodeCount <- 4
 
-nodeFeatures <- c("betweenness","closeness","authority","degree")
+nodeFeatures <- c("eccentricity","betweenness","closeness","authority","degree")
 
 subresultsFile <- "PDSubFiltration.txt"
 powresultsFile <- "PDPowFiltration.txt"
@@ -48,6 +48,9 @@ computeNodeVals <- function(feature, thisGraph) {
      
   }else if (feature == "betweenness") {
     nodeValues = betweenness(thisGraph,normalized=TRUE)
+    
+  }else if (feature == "eccentricity") {
+    nodeValues = eccentricity(thisGraph)
     
   }else {
     message(nodeFeature," has not ben implemented as a node function in computeNodeVals()")
