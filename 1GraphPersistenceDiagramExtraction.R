@@ -1,158 +1,133 @@
 # Title     : GraphPersistenceDiagramExtraction
-# Objective : Extract sub level or power filtration persistence diagrams from graphs
+# Objective : Extract sub level persistence diagrams from graphs
 # requires dataset folders from http://networkrepository.com/labeled.php
 # Created by: Cuneyt Akcora
 # Created on: 2020-12-18
 library(igraph)
 library(TDA)
+library(dplyr)
 rm(list = ls())
 options(java.parameters = "-Xmx200g")
 
 
 # 3 Graph ML datasets
 dataPath <- "C:/Users/akkar/Documents/GraphML/"
+outputPath="C:/Users/akkar/IdeaProjects/PeaceCorps/SingleFeature/Filtrations/"
 
-p1 <-  "ENZYMES/ENZYMES."
-p2 <-  "proteins/proteins."
-p3 <-  "REDDIT-BINARY/REDDIT-BINARY."
-p4 <-  "IMDB-MULTI/IMDB-MULTI."
-p5 <-  "NCI1/NCI1."
-p6 <-  "IMDB-BINARY/IMDB-BINARY."
 
-# maximum simplex dimension
-maxDimension <- 3
+# max dimension of the homological features to be computed. (e.g. 0 for connected components, 1 for connected components and loops, 2 for connected components, loops, voids, etc.)
+maxDimension <- 1
+
+# upper limit on the simplex dimension, size of the cliques to find
+maxClique <-2
 # node count thresholds to ignore a graph
 minNodeCount <- 4
 
-nodeFeatures <- c("eccentricity","betweenness","closeness","authority","degree")
+outputFile <- "PDSubFiltration.txt"
 
-subresultsFile <- "PDSubFiltration.txt"
-powresultsFile <- "PDPowFiltration.txt"
-
-useSubLevel <- TRUE
 # if subLevel=FALSE, consider reducing maxNodeCount because power filtration
 # does not work with large graphs
 maxNodeCount <- 6000
 
-computeNodeVals <- function(feature, thisGraph) {
-  if (feature == "degree") {
-    nodeValues <- apply(as_adjacency_matrix(thisGraph), 1, sum)
-    # normalize values. This remains unused because we had better results without normalization
-    #nodeValues=nodeValues/max(nodeValues)
-  }else if (feature == "authority") {
-    nodeValues = authority_score(thisGraph)$vector
-    nodeValues<-nodeValues/max(nnodeValues)
-     
-  }else if (feature == "closeness") {
-    nodeValues = closeness(thisGraph,normalized=TRUE)
-     
-  }else if (feature == "betweenness") {
-    nodeValues = betweenness(thisGraph,normalized=TRUE)
-    
-  }else if (feature == "eccentricity") {
-    nodeValues = eccentricity(thisGraph)
-    
-  }else {
-    message(nodeFeature," has not ben implemented as a node function in computeNodeVals()")
-    }
-  return(nodeValues)
-}
+source("nodeFunctions.R")
 
-
-for(nodeFeature in nodeFeatures){
-  whichOutputFile <- if (useSubLevel){subresultsFile}else{powresultsFile}
-  whichOutputFile<-paste0(nodeFeature,whichOutputFile)
-  #Check its existence
+extractPD<-function(dataset, dataAlias, feature){
+  whichOutputFile<-paste0(outputPath,feature,dataAlias,outputFile)
+  # Remove earlier result files, if they exist
   if (file.exists(whichOutputFile)) {
     file.remove(whichOutputFile)
   }
-  
-  for (path in c(p1, p2, p3, p4, p5, p6)) {
-    edgeFile <- paste0(dataPath, path, "edges")
-    graphFile <- paste0(dataPath, path, "graph_idx")
-    graphIdData <-
-      read.table(graphFile,
-                 quote = "\"",
-                 comment.char = "",
-                 sep = ",")
-    allData <-
-      read.table(edgeFile,
-                 quote = "\"",
-                 comment.char = "",
-                 sep = ",")
-    colnames(allData) <- c("source", "target")
-    message("Processing ",path," for feature ",nodeFeature)
-    for (graphId in unique(graphIdData$V1)) {
-      thisGraphNodes <- which(graphIdData$V1 == graphId)
-      edgeData <-
-        allData[allData$source %in% thisGraphNodes |
-                  allData$target %in% thisGraphNodes, ]
-      graph <- graph.data.frame(edgeData, directed = FALSE)
-      originalV <- vcount(graph)
-      # if the graph is not too small nor too big, compute filtration
+  edgeFile <- paste0(dataPath, dataset, "edges")
+  graphFile <- paste0(dataPath, dataset, "graph_idx")
+  graphIdData <-
+    read.table(graphFile,
+               quote = "\"",
+               comment.char = "",
+               sep = ",")
+  allData <-
+    read.table(edgeFile,
+               quote = "\"",
+               comment.char = "",
+               sep = ",")
+  colnames(allData) <- c("source", "target")
+  graphs <- unique(graphIdData$V1)
+  message("Processing ",dataAlias," for feature ",feature,". Num of Graphs: ",length(graphs))
+  results<-data.frame()
+  for (graphId in graphs) {
+    # locate nodes of the graph
+    message(graphId)
+    thisGraphNodes <- which(graphIdData$V1 == graphId)
+    # load edges of the graph
+    edgeData <-
+      allData[allData$source %in% thisGraphNodes |
+                allData$target %in% thisGraphNodes, ]
+    graph <- graph.data.frame(edgeData, directed = FALSE)
+    nodeCount <- vcount(graph)
+    
+    # if the graph is not too small nor too big, compute filtration
+    if (nodeCount > minNodeCount && nodeCount < maxNodeCount) {
+      # below we use sub level filtrations.
       
-      if (originalV > minNodeCount && originalV < maxNodeCount) {
-        # below we use power filtration or sub/super level filtrations.
-        # You need to use one of them to created the filtration object
-        if (useSubLevel) {
-          #1- sublevel filtration
-          F.values = computeNodeVals(nodeFeature, graph)
-          
-          # for maxDimension=3 below means we are adding 0,1,2 simplices (nodes,edges,triangles) to our complex
-          cmplx <-
-            cliques(as.undirected(graph), min = 0, max = maxDimension)
-          # use sublevel=T for sublevel, sublevel=F for superlevel filtration
-          FltRips <-
-            funFiltration(FUNvalues = F.values,
-                          cmplx = cmplx,
-                          sublevel = T) # Construct filtration using F.values
-        } else{
-          # 2 - power filtration
-          distanceMatrix <-
-            shortest.paths(graph, v = V(graph), to = V(graph))
-          maxScale <- max(distanceMatrix)
-          FltRips <-
-            ripsFiltration(
-              distanceMatrix,
-              maxdimension = maxDimension,
-              maxscale = maxScale,
-              dist = 'arbitrary',
-              printProgress = FALSE
-            )
-        }
-        #extract the persistence diagram
-        persistenceDiagram <-
-          filtrationDiag(filtration = FltRips, maxdimension = maxDimension)$diagram
-        
-        #extract betti number
-        b0OrigGraph <- sum(persistenceDiagram[, 1] == 0)
-        b1OrigGraph <- sum(persistenceDiagram[, 1] == 1)
-        b2OrigGraph <- sum(persistenceDiagram[, 1] == 2)
-        
-        #extract birth and death times
-        pd2 <-
-          cbind(persistenceDiagram,
-                GraphId = graphId,
-                dataset = path)
-        
-        write.table(
-          pd2,
-          file = whichOutputFile,
-          sep = "\t",
-          row.names = FALSE,
-          col.names = FALSE,
-          append = T,
-          quote = FALSE
-        )
-        
-      } else {
-        message("Ignoring ",
-                path,
-                " graph ",
-                graphId,
-                " Node count:",
-                originalV)
-      }
+      #sublevel filtration
+      # compute node function values 
+      F.values = computeNodeVals(feature, graph,dataset=dataset,dataPath=dataPath)
+      
+      # for maxClique=3 below means we are adding 0,1,2 simplices (nodes,edges,triangles) to our complex
+      cmplx <- cliques(as.undirected(graph), min = 0, max = maxClique)
+      # use sublevel=T for sublevel, sublevel=F for superlevel filtration
+      # F.values are node values. At these values, node appear in the complex,
+      # and their edges to other active nodes also activate.
+      FltRips <- funFiltration(FUNvalues = F.values,
+                               cmplx = cmplx,
+                               sublevel = T) # Construct filtration using F.values
+      
+      #extract the persistence diagram
+      persistenceDiagram <-
+        filtrationDiag(filtration = FltRips, maxdimension = maxDimension)$diagram
+      
+      #extract betti number - unused
+      # b0OrigGraph <- sum(persistenceDiagram[, 1] == 0)
+      # b1OrigGraph <- sum(persistenceDiagram[, 1] == 1)
+      # b2OrigGraph <- sum(persistenceDiagram[, 1] == 2)
+      
+      #extract birth and death times
+      pd2 <-cbind(persistenceDiagram,GraphId = graphId,dataset = dataAlias)
+      results<-rbind(results,pd2)
+      
+    } else {
+      message("Ignoring ",dataAlias," graph ",graphId," Node count:",nodeCount)
     }
   }
+  write.table(
+    results,
+    file = whichOutputFile,
+    sep = "\t",
+    row.names = FALSE,
+    col.names = FALSE,
+    append = T,
+    quote = FALSE
+  )
+}
+
+nodeFeatures <- c("degree","betweenness","closeness")#"eccentricity","hub","authority"
+ 
+nodeFeatures2 <-c("ricci","forman")
+for(f in nodeFeatures2){
+  extractPD("ENZYMES/ENZYMES.","Enzyme",feature=f)
+     if(FALSE){
+       
+     
+     extractPD("BZR/BZR.","BZR",feature=f)
+     extractPD("COX2/COX2.","COX2",feature=f)
+     extractPD("DHFR/DHFR.","DHFR",feature=f)
+     extractPD("FRANKENSTEIN/FRANKENSTEIN.","FRANKENSTEIN",feature=f)
+     extractPD("REDDIT-MULTI-5K/REDDIT-MULTI-5K.","REDDIT5K",feature=f)
+   
+    extractPD("proteins/proteins.","Protein",feature=f)
+    extractPD("REDDIT-BINARY/REDDIT-BINARY.","RedditBinary",feature=f)
+    extractPD("IMDB-MULTI/IMDB-MULTI.","IMDBMulti",feature=f)
+    extractPD("NCI1/NCI1.","NCI1",feature=f)
+    extractPD("IMDB-BINARY/IMDB-BINARY.","IMDBBinary",feature=f)
+     }
+    
 }

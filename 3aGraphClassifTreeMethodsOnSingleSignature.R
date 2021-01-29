@@ -6,11 +6,11 @@
 # Created by: Cuneyt Akcora
 # Created on: 2020-12-18
 rm(list = ls())
+library(plyr)
 library(dplyr)
 library(randomForest)
 library(ggplot2)
 library(stringr)
-library(plyr)
 library(xgboost)
 library(igraph)
 
@@ -35,7 +35,7 @@ for(nodeFeature in nodeFeatures){
   
   # Some graphs have too long signatures.
   # max length of the Signature array that we will use in classification.
-  maxSignaturelength <- 600
+  maxSignaturelength <- 100
   trainSize <- 0.8
   
   for (dataset in unique(data$dataset)) {
