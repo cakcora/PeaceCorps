@@ -1,8 +1,8 @@
 # Title     : GraphTreeMethods.R
 # Objective : Run Random Forest and XGBoost classifiers on betti signature to
 # predict graph labels.
-# requires results from PDSignatureExtractionForDiscreteFeatures.R
-# and PDSignatureExtractionForContinuousFeatures.R
+# requires results from 2aPDSignatureExtractionForDiscreteFeatures.R
+# and 2bPDSignatureExtractionForContinuousFeatures.R
 # Created by: Cuneyt Akcora
 # Created on: 2020-12-18
 rm(list = ls())
@@ -13,89 +13,62 @@ library(ggplot2)
 library(stringr)
 library(xgboost)
 library(igraph)
+library(mlbench)
+library(caret)
 
-useSubLevel <- TRUE
-subSignatureFile <- "graphMlResultsAnalysisSub.txt"
-powSignatureFile <- "graphMlResultsAnalysisPow.txt"
-dataPath<-"C:/Users/akkar/Documents/GraphML/"
-nodeFeatures <- c("eccentricity","betweenness","closeness","degree","authority")
+inputFile <- "Signature.txt"
+#inputPath <-"C:/Users/akkar/IdeaProjects/PeaceCorps/SingleFeature/Signatures0Max/"
+inputPath <-"C:/Users/akkar/IdeaProjects/PeaceCorps/SingleFeature/SignaturesMinMax/"
+outputPath<-"C:/Users/akkar/IdeaProjects/PeaceCorps/SingleFeature/Predictions/"
+labelPath<-"C:/Users/akkar/Documents/GraphML/"
 
-for(nodeFeature in nodeFeatures){
-  whichSignatureFile <- if (useSubLevel) subSignatureFile else powSignatureFile
-  whichSignatureFile<-paste0(nodeFeature,whichSignatureFile)
+rfcv=3
+trainSize = 0.8
+
+classifyWithSaw<-function(dataset ,dataAlias , feature){
+  whichSignatureFile<-paste0(inputPath,dataAlias,feature,inputFile)
   
   data <- read.table(whichSignatureFile, header = F, sep = "\t")
   data <- na.omit(data)
-  colnames(data) <- c("dataset", "graphId", "betti", "bettisignature")
-  
-  # does every graph have both betti 0 and 1?
-  # at least some must have
-  sanityCheck <- ddply(data, .(dataset, graphId), summarize, l = length(unique(betti)))
-  table(sanityCheck$l)
-  
-  # Some graphs have too long signatures.
-  # max length of the Signature array that we will use in classification.
-  maxSignaturelength <- 100
-  trainSize <- 0.8
-  
-  for (dataset in unique(data$dataset)) {
-    datasetData <- data[data$dataset == dataset,]
-    idFile <- paste0(dataPath,dataset, "graph_labels")
-    labels <- read.table(idFile, quote = "\"", comment.char = "", sep = ",")
-    colnames(labels) <- "label"
-    # add graph id to the label data
-    labels$graphId <- seq(1, nrow(labels))
-    # we need label conversion because some ML algs require labels to be numeric and start from 0
-    lblIndex<-0
-    labels2<-as.data.frame(sort(unique(labels$label)))
-    labels2$id<-seq(0,(nrow(labels2)-1))
-    colnames(labels2)<-c("oldlabel","newlabel")
-    for(ind in seq(0,nrow(labels))){
-      oldl<-labels[ind,"label"]
-      labels[ind,"label"]<-labels2[labels2$oldlabel==oldl,]$newlabel
-    }
-    for (bettiNumber in unique(datasetData$betti)) {
-      datasetSingleBettiData <- datasetData[datasetData$betti == bettiNumber,]
-      maxLength <- 0
+  colnames(data) <- c("graphId", "betti", "bettisignature")
+  idFile <- paste0(labelPath,dataset, "graph_labels")
+  labels <- read.table(idFile, quote = "\"", comment.char = "", sep = ",")
+  colnames(labels) <- "label"
+  # add graph id to the label data
+  labels$graphId <- seq(1, nrow(labels))
+  # we need label conversion because some ML algs require labels to be numeric and start from 0
+  lblIndex<-0
+  labels2<-as.data.frame(sort(unique(labels$label)))
+  labels2$id<-seq(0,(nrow(labels2)-1))
+  colnames(labels2)<-c("oldlabel","newlabel")
+  for(ind in seq(0,nrow(labels))){
+    oldl<-labels[ind,"label"]
+    labels[ind,"label"]<-labels2[labels2$oldlabel==oldl,]$newlabel
+  }
+   
+  for(bettiNumber in c(0,1)){
+    datasetSingleBettiData <- data[data$betti == bettiNumber,]
+    if(length(unique(datasetSingleBettiData$bettisignature))==1){
+      message(dataset,feature,bettiNumber,": All data has a single betti signature. Classifier cannot be built on such data.")
+    }else{      
       # compute the length of the signature vector that we need to create for graphs of this dataset
       vectorLength <- 1 + max(str_count(datasetSingleBettiData$bettisignature, " "))
-      # if the vector is too long, truncate it
       
-      if (vectorLength > maxSignaturelength) {
-        vectorLength <- maxSignaturelength
-      }
-      truncatedSignatureCount <- 0
-      bettiHistogramData <- array()
       graphSignatureVectors <- data.frame()
       for (row in seq(seq_len(nrow(datasetSingleBettiData)))) {
         graphId <- (datasetSingleBettiData[row,]$graphId)
         bfunct <- as.character(datasetSingleBettiData[row,]$bettisignature)
         value <- strsplit(bfunct, split = " ")[[1]]
-        # normalizing the signature
         value <- as.integer(value)
-        #meanOfValues<-mean(value)
-        #stdOfValues<-sd(value)
-        #value<-(value-meanOfValues)/stdOfValues
+        if(sum(value)==0) {
+          # this should happen sometimes with betti1
+          next;
+        }
         # convert signature array to our final vector
         signatureArray <- value[1:vectorLength]
-        # end of the sigArray may contain NAs because
-        # we may use a vectorLength>length(value)
-        # in that case, we pad the last value in the array. 
-        # if last value!=0, some bettis die at INF, i.e., they do not die.
         
-        signatureArray[is.na(signatureArray)] <- value[length(value)]
-        
-        lengthResult <- length(value)
-        if (lengthResult > maxLength) {
-          maxLength <- lengthResult
-        }
-        # did we truncate this signature?
-        if (lengthResult > vectorLength) {
-          truncatedSignatureCount <- truncatedSignatureCount + 1
-        }
-        bettiHistogramData <- c(bettiHistogramData, lengthResult)
-        formattedGraphSignature <- cbind.data.frame(name = dataset,
-                                                    graphId = as.integer(graphId))
+        formattedGraphSignature <- cbind.data.frame(name = dataAlias,
+                                                    graphId = graphId)
         for (ind in seq(1:vectorLength)) {
           formattedGraphSignature <- cbind.data.frame(formattedGraphSignature, signatureArray[ind])
         }
@@ -103,7 +76,6 @@ for(nodeFeature in nodeFeatures){
         graphSignatureVectors <- rbind.data.frame(graphSignatureVectors, formattedGraphSignature)
         
       }
-      # message(dataset, " ", bettiNumber, " we have at most ", maxLength, " betti values in a signature")
       
       # Classification starts at this point!
       # we do not need dataset name in classification, do not ask me why I put it in the 1st place.
@@ -114,46 +86,108 @@ for(nodeFeature in nodeFeatures){
       labeledData$graphId<-NULL
       labeledData$label <- as.factor(labeledData$label)
       
-      dataSetSize <- floor(nrow(labeledData) * trainSize)
+      trainingDataSize <- floor(nrow(labeledData) * trainSize)
       # Generate a random sample of "data_set_size" indexes
-      indexes <- sample(seq_len(nrow(labeledData)), size = dataSetSize)
+      indexes <- sample(seq_len(nrow(labeledData)), size = trainingDataSize)
       # Divide the data to the training and test sets
       training <- labeledData[indexes,]
       test <- labeledData[-indexes,]
       # create a random forest classifier
-      rf <- randomForest(formula = label ~ ., data = training, ntree = 500, mtry = sqrt(maxSignaturelength), importance = TRUE)
-      varImpPlot(rf,type=2)
-      # predict labels of test set graphs
-      predictedLabels <- predict(rf, test)
-      rfAccuracy <- sum(test$label == predictedLabels) / nrow(test)
-      message(dataset, "\t",nodeFeature,"\t",bettiNumber,"\trf\t", rfAccuracy)
+      numcol <- sqrt(ncol(labeledData))
+      # we select mtry values around the sqrt(numcols). This is standard selection
+      tunegrid <- expand.grid(.mtry=seq(11,numcol+6,by=3))
+      control <- trainControl(method="repeatedcv", number=10, repeats=1, search="grid")
       
-      # xgboost classifier
-      # just to prevent data contamination, we recreate trainign and test datasets with the same indices
-      # as those used in the random forest
-      labeledData <- merge(labels, graphSignatureVectors, by = "graphId")
-      colnames(labeledData) <- c("graphId", "label", sprintf("betti%s", seq(1:vectorLength)))
+      rf_default <- train(label~., 
+                          data=training, 
+                          method='rf', 
+                          metric='Accuracy', 
+                          tunegrid=tunegrid,
+                          trControl=control)
+      trainMaxAccuracy= max(rf_default$results$Accuracy)
+      testLabels <- predict(rf_default, test)
+      # compare predicted outcome and true outcome
+      testRfAccuracy <- sum(test$label == testLabels) / nrow(test)
+      message(dataAlias,"CrossValidation\t",feature,"\t",bettiNumber,
+              "\trf\t", trainMaxAccuracy,"\t",testRfAccuracy,"\t",nrow(training))
       
-      labeledData$label<-as.integer(labeledData$label)
-      training <- labeledData[indexes,]
-      test <- labeledData[-indexes,]
-      numClasses <- length(unique(training$label))
-      
-      trainMatrix <- as.matrix(training[,3:length(training)])
-      
-      
-      bst <- xgboost(data = trainMatrix,label = training$label,nrounds = 25,
-                     objective = "multi:softprob", num_class = numClasses, verbose=F)
-      pred <- predict(bst, as.matrix(test[,3:length(test)]))
-      
-      pred <- matrix(pred, ncol=numClasses, byrow=TRUE)
-      # convert the probabilities to softmax labels
-      pred_labels <- max.col(pred) - 1
-      xgboostAccuracy<- sum(pred_labels == test$label)/length(test$label)
-      message(dataset, "\t",nodeFeature,"\t",bettiNumber,"\txgboost\t", xgboostAccuracy)
-      
-      
-      
+      if(FALSE){
+        #xgboost cross validation
+        cv.ctrl <- trainControl(method = "repeatedcv", repeats = 3,number = 10, 
+                                #summaryFunction = twoClassSummary,
+                                classProbs = TRUE,
+                                allowParallel=T)
+        
+        xgb.grid <- expand.grid(nrounds = 1000,
+                                eta = c(0.01,0.05,0.1),
+                                colsample_bytree = 1,
+                                min_child_weight = 100,
+                                subsample = 1,
+                                gamma=1,
+                                max_depth = c(2,4,6,8,10,14)
+        )
+        set.seed(135)
+        # caret library expects data labels to not start with numbers.
+        # We will change labels to start with letter P
+        training2<-training
+        training2$label<-paste0("P",training2$label)
+        xgb_tune <-train(x=training2[,which(names(training2) != "label")],
+                         y=training2$label,
+                         method="xgbTree",
+                         trControl=cv.ctrl,
+                         tuneGrid=xgb.grid,
+                         verbose=T,
+                         metric="Kappa",
+                         nthread =5
+        )
+        test2<-test
+        test2$label<-paste0("P",test2$label)
+        pred <- predict(xgb_tune, as.matrix(test2[,which(names(test2) != "label")]))
+        numClasses <- length(unique(training2$label))
+        pred <- matrix(pred, ncol=numClasses, byrow=TRUE)
+        # convert the probabilities to softmax labels
+        xgboostCvAccuracy<- sum(pred == test2$label)/length(test2$label)
+        message(dataAlias, "\t",feature,"\t",bettiNumber,"\txgboost\t", xgboostCvAccuracy)
+        
+        # xgboost classifier
+        
+        labeledData$label<-as.integer(labeledData$label)
+        training <- labeledData[indexes,]
+        test <- labeledData[-indexes,]
+        numClasses <- length(unique(training$label))
+        trainMatrix <- as.matrix(training[,3:length(training)])
+        bst <- xgboost(data = trainMatrix,label = training$label,nrounds = 25,
+                       objective = "multi:softprob", num_class = numClasses, verbose=F)
+        pred <- predict(bst, as.matrix(test[,3:length(test)]))
+        
+        pred <- matrix(pred, ncol=numClasses, byrow=TRUE)
+        # convert the probabilities to softmax labels
+        pred_labels <- max.col(pred) - 1
+        xgboostAccuracy<- sum(pred_labels == test$label)/length(test$label)
+        message(dataAlias, "\t",feature,"\t",bettiNumber,"\txgboost\t", xgboostAccuracy,"\t",xgboostCvAccuracy)
+      }
     }
+    
   }
 }
+
+features <- c("betweenness","closeness","degree")#"eccentricity","authority"
+features2<-c("ricci","forman")
+for(f in features2){
+  classifyWithSaw(dataset="ENZYMES/ENZYMES.",dataAlias ="Enzyme", feature=f )
+  if(TRUE){
+    classifyWithSaw(dataset="BZR/BZR.",dataAlias ="BZR", feature=f)
+    classifyWithSaw(dataset="REDDIT-MULTI-5K/REDDIT-MULTI-5K.",dataAlias ="REDDIT5K", feature=f)
+    classifyWithSaw(dataset="COX2/COX2.",dataAlias ="COX2", feature=f)
+    classifyWithSaw(dataset="DHFR/DHFR.",dataAlias ="DHFR", feature=f)
+    classifyWithSaw(dataset="NCI1/NCI1.",dataAlias ="NCI1", feature=f)
+    classifyWithSaw(dataset="FRANKENSTEIN/FRANKENSTEIN.",dataAlias ="FRANKENSTEIN", feature=f)
+    
+   
+    classifyWithSaw(dataset="proteins/proteins.",dataAlias ="Protein", feature=f )
+    classifyWithSaw(dataset="REDDIT-BINARY/REDDIT-BINARY.",dataAlias ="RedditBinary", feature=f)
+    classifyWithSaw(dataset="IMDB-MULTI/IMDB-MULTI.",dataAlias ="IMDBMulti", feature=f)
+    classifyWithSaw(dataset="IMDB-BINARY/IMDB-BINARY.",dataAlias ="IMDBBinary", feature=f)
+  }
+}
+
