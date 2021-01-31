@@ -99,7 +99,10 @@ sigComputation<-function(graphData,bettiNum,sLen){
 computeSaw<-function(dataset,dataAlias,feature,sLen){
   signatureLength<-3*sLen
   whichInputFile<-paste0(dataPath,feature,dataAlias,inputFile)
-  
+  if (!file.exists(whichInputFile)) {
+     message(dataAlias," persistence diagram file does not exist!")
+    return(-1);
+  }
   data <- read.table(file = whichInputFile,header = F, sep = "\t")
   colnames(data) <- c("betti", "birth", "death", "graphId", "dataAlias")
   
@@ -139,8 +142,11 @@ computeSaw<-function(dataset,dataAlias,feature,sLen){
 nodeFeatures <- c("degree","betweenness","closeness")
 nodeFeatures2<-c("ricci","forman")
 for(f in nodeFeatures2){
-  computeSaw(dataset="ENZYMES/ENZYMES.",dataAlias ="Enzyme", feature=f, sLen=100)
+  computeSaw(dataset="REDDIT-BINARY/REDDIT-BINARY.",dataAlias ="RedditBinary", feature=f, sLen=100)
+  computeSaw(dataset="IMDB-MULTI/IMDB-MULTI.",dataAlias ="IMDBMulti", feature=f, sLen=100)
+  computeSaw(dataset="IMDB-BINARY/IMDB-BINARY.",dataAlias ="IMDBBinary", feature=f, sLen=100)
   if(FALSE){
+  computeSaw(dataset="ENZYMES/ENZYMES.",dataAlias ="Enzyme", feature=f, sLen=100)
   computeSaw(dataset="BZR/BZR.",dataAlias ="BZR", feature=f, sLen=100)
   computeSaw(dataset="REDDIT-MULTI-5K/REDDIT-MULTI-5K.",dataAlias ="REDDIT5K", feature=f, sLen=100)
   computeSaw(dataset="COX2/COX2.",dataAlias ="COX2", feature=f, sLen=100)
@@ -151,9 +157,7 @@ for(f in nodeFeatures2){
   
   #computeSaw(dataset="ENZYMES/ENZYMES.",dataAlias ="Enzyme", feature=f, sLen=100)
   computeSaw(dataset="proteins/proteins.",dataAlias ="Protein", feature=f, sLen=100)
-  computeSaw(dataset="REDDIT-BINARY/REDDIT-BINARY.",dataAlias ="RedditBinary", feature=f, sLen=100)
-  computeSaw(dataset="IMDB-MULTI/IMDB-MULTI.",dataAlias ="IMDBMulti", feature=f, sLen=100)
-  computeSaw(dataset="IMDB-BINARY/IMDB-BINARY.",dataAlias ="IMDBBinary", feature=f, sLen=100)
+ 
   }
 }
  

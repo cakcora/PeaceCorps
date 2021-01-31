@@ -2,9 +2,9 @@
 require(igraph)
 
 loadRicci<-function(dataset,graph, dataPath, method){
-  edgeFile <- paste0(dataPath,dataset, method)
+  datFile <- paste0(dataPath,dataset, method)
   dat <-
-    read.table(edgeFile,
+    read.table(datFile,
                quote = "\"",
                comment.char = "",
                sep = "\t")

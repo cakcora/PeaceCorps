@@ -227,21 +227,22 @@ computePersistentGrid<-function(dataset,dataAlias,feature1,feature2){
 features<-c("closeness","degree","betweenness")#"authority","eccentricity"
 features2<-c("ricci","forman")
 for(i1 in 1:length(features)){
-  for(i2 in (i1+1):length(features2)){
+  for(i2 in (i1+1):length(features)){
     f1 = features[[i1]]
     f2 = features[[i2]]
+    
+    computePersistentGrid("NCI1/NCI1.","NCI1",feature1=f1,feature2=f2)
+    if(FALSE){
     computePersistentGrid("BZR/BZR.","BZR",feature1=f1,feature2=f2)
     computePersistentGrid("REDDIT-MULTI-5K/REDDIT-MULTI-5K.","REDDIT5K",feature1=f1,feature2=f2)
     computePersistentGrid("COX2/COX2.","COX2",feature1=f1,feature2=f2)
     computePersistentGrid("DHFR/DHFR.","DHFR",feature1=f1,feature2=f2)
     computePersistentGrid("FRANKENSTEIN/FRANKENSTEIN.","FRANKENSTEIN",feature1=f1,feature2=f2)
-    
-    if(FALSE){
     computePersistentGrid("ENZYMES/ENZYMES.","Enzyme",feature1=f1,feature2=f2)
     computePersistentGrid("proteins/proteins.","Protein",feature1=f1,feature2=f2)
     computePersistentGrid("REDDIT-BINARY/REDDIT-BINARY.","RedditBinary",feature1=f1,feature2=f2)
     computePersistentGrid("IMDB-MULTI/IMDB-MULTI.","IMDBMulti",feature1=f1,feature2=f2)
-    computePersistentGrid("NCI1/NCI1.","NCI1",feature1=f1,feature2=f2)
+    
     computePersistentGrid("IMDB-BINARY/IMDB-BINARY.","IMDBBinary",feature1=f1,feature2=f2)
     }
   }

@@ -22,8 +22,9 @@ inputPath <-"C:/Users/akkar/IdeaProjects/PeaceCorps/SingleFeature/SignaturesMinM
 outputPath<-"C:/Users/akkar/IdeaProjects/PeaceCorps/SingleFeature/Predictions/"
 labelPath<-"C:/Users/akkar/Documents/GraphML/"
 
-rfcv=3
+ 
 trainSize = 0.8
+kNeighbor=5
 
 classifyWithSaw<-function(dataset ,dataAlias , feature){
   whichSignatureFile<-paste0(inputPath,dataAlias,feature,inputFile)
@@ -111,6 +112,28 @@ classifyWithSaw<-function(dataset ,dataAlias , feature){
       message(dataAlias,"CrossValidation\t",feature,"\t",bettiNumber,
               "\trf\t", trainMaxAccuracy,"\t",testRfAccuracy,"\t",nrow(training))
       
+      # svm classifier
+      train_control <- trainControl(method="repeatedcv", number=10, repeats=1)
+      svm1 <- train(label ~., data = training, method = "svmLinear", trControl = train_control,  preProcess = c("center","scale"))
+      predictedTest <- predict(svm1,test)
+      trainingSvmAcc = svm1$results$Accuracy
+      testSvmAcc= Accuracy(predictedTest,test$label)
+      message(dataAlias,"CrossValidation\t",feature,"\t",bettiNumber,
+              "\tsvm\t", trainingSvmAcc,"\t",testSvmAcc,"\t",nrow(training))
+      
+      # knn classifier
+      
+      matr=dtwDist(data.matrix(test[-1]),data.matrix(training[-1]))
+      pred = array(0)
+      for( i in 1:nrow(matr)){
+       n<- (names(tail(sort.int(matr[i,],decreasing = T), kNeighbor)))
+       label = names(which.max(table(training[n,"label"])))
+       pred[i]=label
+      }
+      testKnnAcc= Accuracy(pred,test$label)
+      message(dataAlias,"CrossValidation\t",feature,"\t",bettiNumber,
+              "\tknn\t", testKnnAcc,"\t",nrow(training))
+      
       if(FALSE){
         #xgboost cross validation
         cv.ctrl <- trainControl(method = "repeatedcv", repeats = 3,number = 10, 
@@ -173,21 +196,23 @@ classifyWithSaw<-function(dataset ,dataAlias , feature){
 
 features <- c("betweenness","closeness","degree")#"eccentricity","authority"
 features2<-c("ricci","forman")
-for(f in features2){
-  classifyWithSaw(dataset="ENZYMES/ENZYMES.",dataAlias ="Enzyme", feature=f )
-  if(TRUE){
-    classifyWithSaw(dataset="BZR/BZR.",dataAlias ="BZR", feature=f)
+for(f in c(features,features2)){
+  classifyWithSaw(dataset="IMDB-MULTI/IMDB-MULTI.",dataAlias ="IMDBMulti", feature=f)
+  classifyWithSaw(dataset="IMDB-BINARY/IMDB-BINARY.",dataAlias ="IMDBBinary", feature=f)
+  classifyWithSaw(dataset="REDDIT-BINARY/REDDIT-BINARY.",dataAlias ="RedditBinary", feature=f)
+  if(FALSE){
+    #classifyWithSaw(dataset="ENZYMES/ENZYMES.",dataAlias ="Enzyme", feature=f )
     classifyWithSaw(dataset="REDDIT-MULTI-5K/REDDIT-MULTI-5K.",dataAlias ="REDDIT5K", feature=f)
     classifyWithSaw(dataset="COX2/COX2.",dataAlias ="COX2", feature=f)
     classifyWithSaw(dataset="DHFR/DHFR.",dataAlias ="DHFR", feature=f)
-    classifyWithSaw(dataset="NCI1/NCI1.",dataAlias ="NCI1", feature=f)
+    
     classifyWithSaw(dataset="FRANKENSTEIN/FRANKENSTEIN.",dataAlias ="FRANKENSTEIN", feature=f)
+    classifyWithSaw(dataset="BZR/BZR.",dataAlias ="BZR", feature=f)
     
    
     classifyWithSaw(dataset="proteins/proteins.",dataAlias ="Protein", feature=f )
-    classifyWithSaw(dataset="REDDIT-BINARY/REDDIT-BINARY.",dataAlias ="RedditBinary", feature=f)
-    classifyWithSaw(dataset="IMDB-MULTI/IMDB-MULTI.",dataAlias ="IMDBMulti", feature=f)
-    classifyWithSaw(dataset="IMDB-BINARY/IMDB-BINARY.",dataAlias ="IMDBBinary", feature=f)
+    
+    
   }
 }
 

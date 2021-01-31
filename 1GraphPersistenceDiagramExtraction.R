@@ -55,7 +55,6 @@ extractPD<-function(dataset, dataAlias, feature){
   results<-data.frame()
   for (graphId in graphs) {
     # locate nodes of the graph
-    message(graphId)
     thisGraphNodes <- which(graphIdData$V1 == graphId)
     # load edges of the graph
     edgeData <-
@@ -70,8 +69,12 @@ extractPD<-function(dataset, dataAlias, feature){
       
       #sublevel filtration
       # compute node function values 
-      F.values = computeNodeVals(feature, graph,dataset=dataset,dataPath=dataPath)
-      
+      tryCatch({
+        F.values = computeNodeVals(feature, graph,dataset=dataset,dataPath=dataPath)
+      }, error = function(error_condition) {
+        message("Error in extracting PDs for ",dataAlias)
+        return(-1);
+      })
       # for maxClique=3 below means we are adding 0,1,2 simplices (nodes,edges,triangles) to our complex
       cmplx <- cliques(as.undirected(graph), min = 0, max = maxClique)
       # use sublevel=T for sublevel, sublevel=F for superlevel filtration
@@ -110,24 +113,24 @@ extractPD<-function(dataset, dataAlias, feature){
 }
 
 nodeFeatures <- c("degree","betweenness","closeness")#"eccentricity","hub","authority"
- 
+
 nodeFeatures2 <-c("ricci","forman")
 for(f in nodeFeatures2){
-  extractPD("ENZYMES/ENZYMES.","Enzyme",feature=f)
-     if(FALSE){
-       
-     
-     extractPD("BZR/BZR.","BZR",feature=f)
-     extractPD("COX2/COX2.","COX2",feature=f)
-     extractPD("DHFR/DHFR.","DHFR",feature=f)
-     extractPD("FRANKENSTEIN/FRANKENSTEIN.","FRANKENSTEIN",feature=f)
-     extractPD("REDDIT-MULTI-5K/REDDIT-MULTI-5K.","REDDIT5K",feature=f)
-   
+  
+  if(TRUE){
+    extractPD("NCI1/NCI1.","NCI1",feature=f)
+    extractPD("ENZYMES/ENZYMES.","Enzyme",feature=f)
+    extractPD("BZR/BZR.","BZR",feature=f)
+    extractPD("COX2/COX2.","COX2",feature=f)
+    extractPD("DHFR/DHFR.","DHFR",feature=f)
+    extractPD("FRANKENSTEIN/FRANKENSTEIN.","FRANKENSTEIN",feature=f)
+    extractPD("REDDIT-MULTI-5K/REDDIT-MULTI-5K.","REDDIT5K",feature=f)
+    
     extractPD("proteins/proteins.","Protein",feature=f)
     extractPD("REDDIT-BINARY/REDDIT-BINARY.","RedditBinary",feature=f)
     extractPD("IMDB-MULTI/IMDB-MULTI.","IMDBMulti",feature=f)
-    extractPD("NCI1/NCI1.","NCI1",feature=f)
-    extractPD("IMDB-BINARY/IMDB-BINARY.","IMDBBinary",feature=f)
-     }
     
+    extractPD("IMDB-BINARY/IMDB-BINARY.","IMDBBinary",feature=f)
+  }
+  
 }
