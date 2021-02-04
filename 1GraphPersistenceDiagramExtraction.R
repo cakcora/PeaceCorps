@@ -11,8 +11,8 @@ options(java.parameters = "-Xmx200g")
 
 
 # 3 Graph ML datasets
-dataPath <- "C:/Users/akkar/Documents/GraphML/"
-outputPath="C:/Users/akkar/IdeaProjects/PeaceCorps/SingleFeature/Filtrations/"
+dataPath <- "/home/jupiter/GraphML/"
+outputPath="/home/jupiter/GraphML/SingleFeature/Filtrations/"
 
 
 # max dimension of the homological features to be computed. (e.g. 0 for connected components, 1 for connected components and loops, 2 for connected components, loops, voids, etc.)
@@ -115,8 +115,8 @@ extractPD<-function(dataset, dataAlias, feature){
 nodeFeatures <- c("degree","betweenness","closeness")#"eccentricity","hub","authority"
 
 nodeFeatures2 <-c("ricci","forman")
-for(f in nodeFeatures2){
-  
+for(f in c(nodeFeatures2)){
+  # reddit multi pds are missing. 
   if(TRUE){
     extractPD("NCI1/NCI1.","NCI1",feature=f)
     extractPD("ENZYMES/ENZYMES.","Enzyme",feature=f)
@@ -124,7 +124,7 @@ for(f in nodeFeatures2){
     extractPD("COX2/COX2.","COX2",feature=f)
     extractPD("DHFR/DHFR.","DHFR",feature=f)
     extractPD("FRANKENSTEIN/FRANKENSTEIN.","FRANKENSTEIN",feature=f)
-    extractPD("REDDIT-MULTI-5K/REDDIT-MULTI-5K.","REDDIT5K",feature=f)
+    #extractPD("REDDIT-MULTI-5K/REDDIT-MULTI-5K.","REDDIT5K",feature=f)
     
     extractPD("proteins/proteins.","Protein",feature=f)
     extractPD("REDDIT-BINARY/REDDIT-BINARY.","RedditBinary",feature=f)

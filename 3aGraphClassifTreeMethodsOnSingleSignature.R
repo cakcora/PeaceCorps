@@ -15,6 +15,7 @@ library(xgboost)
 library(igraph)
 library(mlbench)
 library(caret)
+library(MLmetrics)
 
 inputFile <- "Signature.txt"
 #inputPath <-"C:/Users/akkar/IdeaProjects/PeaceCorps/SingleFeature/Signatures0Max/"
@@ -22,13 +23,20 @@ inputPath <-"C:/Users/akkar/IdeaProjects/PeaceCorps/SingleFeature/SignaturesMinM
 outputPath<-"C:/Users/akkar/IdeaProjects/PeaceCorps/SingleFeature/Predictions/"
 labelPath<-"C:/Users/akkar/Documents/GraphML/"
 
+inputPath="/home/jupiter/GraphML/SingleFeature/SignaturesMinMax/"
+outputPath = "/home/jupiter/GraphML/SingleFeature/Predictions/"
+labelPath<-"/home/jupiter/GraphML/"
+
  
 trainSize = 0.8
 kNeighbor=5
 
 classifyWithSaw<-function(dataset ,dataAlias , feature){
   whichSignatureFile<-paste0(inputPath,dataAlias,feature,inputFile)
-  
+  if (!file.exists(whichSignatureFile)) {
+   message(whichSignatureFile," signature does not exist. ")
+    return(-1);
+  }
   data <- read.table(whichSignatureFile, header = F, sep = "\t")
   data <- na.omit(data)
   colnames(data) <- c("graphId", "betti", "bettisignature")
@@ -96,7 +104,7 @@ classifyWithSaw<-function(dataset ,dataAlias , feature){
       # create a random forest classifier
       numcol <- sqrt(ncol(labeledData))
       # we select mtry values around the sqrt(numcols). This is standard selection
-      tunegrid <- expand.grid(.mtry=seq(11,numcol+6,by=3))
+      tunegrid <- expand.grid(.mtry=seq((numcol-3),(numcol+3),by=1))
       control <- trainControl(method="repeatedcv", number=10, repeats=1, search="grid")
       
       rf_default <- train(label~., 
@@ -113,16 +121,17 @@ classifyWithSaw<-function(dataset ,dataAlias , feature){
               "\trf\t", trainMaxAccuracy,"\t",testRfAccuracy,"\t",nrow(training))
       
       # svm classifier
+      if(FALSE){
       train_control <- trainControl(method="repeatedcv", number=10, repeats=1)
-      svm1 <- train(label ~., data = training, method = "svmLinear", trControl = train_control,  preProcess = c("center","scale"))
+      svm1 <- train(label ~., data = training, method = "svmRadial", trControl = train_control,  preProcess = c("center","scale"))
       predictedTest <- predict(svm1,test)
       trainingSvmAcc = svm1$results$Accuracy
       testSvmAcc= Accuracy(predictedTest,test$label)
       message(dataAlias,"CrossValidation\t",feature,"\t",bettiNumber,
               "\tsvm\t", trainingSvmAcc,"\t",testSvmAcc,"\t",nrow(training))
-      
+      }
       # knn classifier
-      
+      if(FALSE){
       matr=dtwDist(data.matrix(test[-1]),data.matrix(training[-1]))
       pred = array(0)
       for( i in 1:nrow(matr)){
@@ -133,6 +142,7 @@ classifyWithSaw<-function(dataset ,dataAlias , feature){
       testKnnAcc= Accuracy(pred,test$label)
       message(dataAlias,"CrossValidation\t",feature,"\t",bettiNumber,
               "\tknn\t", testKnnAcc,"\t",nrow(training))
+      }
       
       if(FALSE){
         #xgboost cross validation
@@ -196,23 +206,29 @@ classifyWithSaw<-function(dataset ,dataAlias , feature){
 
 features <- c("betweenness","closeness","degree")#"eccentricity","authority"
 features2<-c("ricci","forman")
-for(f in c(features,features2)){
-  classifyWithSaw(dataset="IMDB-MULTI/IMDB-MULTI.",dataAlias ="IMDBMulti", feature=f)
-  classifyWithSaw(dataset="IMDB-BINARY/IMDB-BINARY.",dataAlias ="IMDBBinary", feature=f)
-  classifyWithSaw(dataset="REDDIT-BINARY/REDDIT-BINARY.",dataAlias ="RedditBinary", feature=f)
+ 
+for(i in 1:30){
+  classifyWithSaw(dataset="REDDIT-MULTI-5K/REDDIT-MULTI-5K.",dataAlias ="REDDIT5K", feature="closeness")
+  classifyWithSaw(dataset="REDDIT-MULTI-5K/REDDIT-MULTI-5K.",dataAlias ="REDDIT5K", feature="betweenness") 
   if(FALSE){
-    #classifyWithSaw(dataset="ENZYMES/ENZYMES.",dataAlias ="Enzyme", feature=f )
-    classifyWithSaw(dataset="REDDIT-MULTI-5K/REDDIT-MULTI-5K.",dataAlias ="REDDIT5K", feature=f)
-    classifyWithSaw(dataset="COX2/COX2.",dataAlias ="COX2", feature=f)
-    classifyWithSaw(dataset="DHFR/DHFR.",dataAlias ="DHFR", feature=f)
+    classifyWithSaw(dataset="IMDB-MULTI/IMDB-MULTI.",dataAlias ="IMDBMulti", feature="closeness")
+    classifyWithSaw(dataset="IMDB-MULTI/IMDB-MULTI.",dataAlias ="IMDBMulti", feature="degree")
+    classifyWithSaw(dataset="IMDB-BINARY/IMDB-BINARY.",dataAlias ="IMDBBinary", feature="closeness")
+    classifyWithSaw(dataset="IMDB-BINARY/IMDB-BINARY.",dataAlias ="IMDBBinary", feature="betweenness")
+    classifyWithSaw(dataset="REDDIT-BINARY/REDDIT-BINARY.",dataAlias ="RedditBinary", feature="degree")
+    classifyWithSaw(dataset="REDDIT-BINARY/REDDIT-BINARY.",dataAlias ="RedditBinary", feature="betweenness")
+    classifyWithSaw(dataset="proteins/proteins.",dataAlias ="Protein", feature="ricci" )
+    classifyWithSaw(dataset="proteins/proteins.",dataAlias ="Protein", feature="forman" )
+    classifyWithSaw(dataset="proteins/proteins.",dataAlias ="Protein", feature="betweenness" )
+    classifyWithSaw(dataset="BZR/BZR.",dataAlias ="BZR", feature="closeness")
+    classifyWithSaw(dataset="BZR/BZR.",dataAlias ="BZR", feature="degree")
+    classifyWithSaw(dataset="NCI1/NCI1.",dataAlias ="NCI1", feature="closeness")
     
-    classifyWithSaw(dataset="FRANKENSTEIN/FRANKENSTEIN.",dataAlias ="FRANKENSTEIN", feature=f)
-    classifyWithSaw(dataset="BZR/BZR.",dataAlias ="BZR", feature=f)
-    
-   
-    classifyWithSaw(dataset="proteins/proteins.",dataAlias ="Protein", feature=f )
-    
-    
-  }
+    classifyWithSaw(dataset="COX2/COX2.",dataAlias ="COX2", feature="ricci")
+    classifyWithSaw(dataset="COX2/COX2.",dataAlias ="COX2", feature="betweenness")
+    classifyWithSaw(dataset="DHFR/DHFR.",dataAlias ="DHFR", feature="betweenness")
+    classifyWithSaw(dataset="DHFR/DHFR.",dataAlias ="DHFR", feature="closeness")
+    classifyWithSaw(dataset="FRANKENSTEIN/FRANKENSTEIN.",dataAlias ="FRANKENSTEIN", feature="degree")
+    classifyWithSaw(dataset="FRANKENSTEIN/FRANKENSTEIN.",dataAlias ="FRANKENSTEIN", feature="betweenness")
+  }   
 }
-

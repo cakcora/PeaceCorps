@@ -24,6 +24,11 @@ outputPath<-"C:/Users/akkar/IdeaProjects/PeaceCorps/SingleFeature/Predictions/"
 labelPath<-"C:/Users/akkar/Documents/GraphML/"
 features <- c("betweenness","eccentricity","closeness","degree","authority")
 
+
+inputPath <-"/home/jupiter/GraphML/MultiFeature/Grids/"
+outputPath<-"/home/jupiter/GraphML/SingleFeature/Predictions/"
+labelPath<-"/home/jupiter/GraphML/"
+
 grid1Size=11
 grid2Size=12
 
@@ -124,24 +129,21 @@ multiPersClassification<-function(dataset,dataAlias,feature1,feature2, whichBett
 }
 
 
-bflag=2
-f1="authority"
-f2="betweenness"
-{
-  if(FALSE){#already computed
-  multiPersClassification(dataset="ENZYMES/ENZYMES.",dataAlias ="Enzyme", feature1=f1,feature2=f2)
-  multiPersClassification(dataset="proteins/proteins.",dataAlias ="Protein", feature1=f1,feature2=f2)
-  multiPersClassification(dataset="REDDIT-BINARY/REDDIT-BINARY.",dataAlias ="RedditBinary", feature1=f1,feature2=f2)
-  multiPersClassification(dataset="IMDB-MULTI/IMDB-MULTI.",dataAlias ="IMDBMulti", feature1=f1,feature2=f2)
-  multiPersClassification(dataset="IMDB-BINARY/IMDB-BINARY.",dataAlias ="IMDBBinary", feature1=f1,feature2=f2)
-  }
-  multiPersClassification("BZR/BZR.","BZR",feature1=f1,feature2=f2)
-  multiPersClassification("NCI1/NCI1.","NCI1",feature1=f1,feature2=f2)
-  multiPersClassification("REDDIT-MULTI-5K/REDDIT-MULTI-5K.","REDDIT5K",feature1=f1,feature2=f2)
-  multiPersClassification("COX2/COX2.","COX2",feature1=f1,feature2=f2)
-  multiPersClassification("DHFR/DHFR.","DHFR",feature1=f1,feature2=f2)
-  multiPersClassification("FRANKENSTEIN/FRANKENSTEIN.","FRANKENSTEIN",feature1=f1,feature2=f2)
-}
+ 
+for(i in 1:30){
+   
+  
+  multiPersClassification(dataset="IMDB-MULTI/IMDB-MULTI.",dataAlias ="IMDBMulti", feature1="betweenness",feature2="closeness")
+  multiPersClassification(dataset="IMDB-BINARY/IMDB-BINARY.",dataAlias ="IMDBBinary", feature1="degree",feature2="betweenness")
+  multiPersClassification(dataset="REDDIT-BINARY/REDDIT-BINARY.",dataAlias ="RedditBinary", feature1="degree",feature2="closeness")
+  multiPersClassification(dataset="proteins/proteins.",dataAlias ="Protein", feature1="betweenness",feature2="closeness")
+  multiPersClassification("BZR/BZR.","BZR",feature1="degree",feature2="closeness")
+  multiPersClassification("NCI1/NCI1.","NCI1",feature1="degree",feature2="betweenness")
+  multiPersClassification("REDDIT-MULTI-5K/REDDIT-MULTI-5K.","REDDIT5K",feature1="closeness",feature2="betweenness")
+  multiPersClassification("COX2/COX2.","COX2",feature1="degree",feature2="betweenness")
+  multiPersClassification("DHFR/DHFR.","DHFR",feature1="closeness",feature2="betweenness")
+  multiPersClassification("FRANKENSTEIN/FRANKENSTEIN.","FRANKENSTEIN",feature1="degree",feature2="betweenness")
+} 
 
 
-
+source("3aGraphClassifTreeMethodsOnSingleSignature.R")

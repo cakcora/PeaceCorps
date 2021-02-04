@@ -13,6 +13,11 @@ dataPath="C:/Users/akkar/IdeaProjects/PeaceCorps/SingleFeature/Filtrations/"
 outputPath="C:/Users/akkar/IdeaProjects/PeaceCorps/SingleFeature/SignaturesMinMax/"
 #outputPath="C:/Users/akkar/IdeaProjects/PeaceCorps/SingleFeature/Signatures0Max/"
 
+dataPath <- "/home/jupiter/GraphML/SingleFeature/Filtrations/"
+outputPath="/home/jupiter/GraphML/SingleFeature/SignaturesMinMax/"
+
+
+
 inputFile <- "PDSubFiltration.txt"
 outputFile <-  "Signature.txt"
 
@@ -141,14 +146,17 @@ computeSaw<-function(dataset,dataAlias,feature,sLen){
 
 nodeFeatures <- c("degree","betweenness","closeness")
 nodeFeatures2<-c("ricci","forman")
-for(f in nodeFeatures2){
-  computeSaw(dataset="REDDIT-BINARY/REDDIT-BINARY.",dataAlias ="RedditBinary", feature=f, sLen=100)
-  computeSaw(dataset="IMDB-MULTI/IMDB-MULTI.",dataAlias ="IMDBMulti", feature=f, sLen=100)
-  computeSaw(dataset="IMDB-BINARY/IMDB-BINARY.",dataAlias ="IMDBBinary", feature=f, sLen=100)
+for(f in c(nodeFeatures)){
+  computeSaw(dataset="REDDIT-MULTI-5K/REDDIT-MULTI-5K.",dataAlias ="REDDIT5K", feature=f, sLen=100)
+  
+  
   if(FALSE){
+    computeSaw(dataset="REDDIT-BINARY/REDDIT-BINARY.",dataAlias ="RedditBinary", feature=f, sLen=100)
+    computeSaw(dataset="IMDB-MULTI/IMDB-MULTI.",dataAlias ="IMDBMulti", feature=f, sLen=100)
+    computeSaw(dataset="IMDB-BINARY/IMDB-BINARY.",dataAlias ="IMDBBinary", feature=f, sLen=100)
   computeSaw(dataset="ENZYMES/ENZYMES.",dataAlias ="Enzyme", feature=f, sLen=100)
   computeSaw(dataset="BZR/BZR.",dataAlias ="BZR", feature=f, sLen=100)
-  computeSaw(dataset="REDDIT-MULTI-5K/REDDIT-MULTI-5K.",dataAlias ="REDDIT5K", feature=f, sLen=100)
+  #
   computeSaw(dataset="COX2/COX2.",dataAlias ="COX2", feature=f, sLen=100)
   computeSaw(dataset="DHFR/DHFR.",dataAlias ="DHFR", feature=f, sLen=100)
   computeSaw(dataset="NCI1/NCI1.",dataAlias ="NCI1", feature=f, sLen=100)
@@ -160,6 +168,7 @@ for(f in nodeFeatures2){
  
   }
 }
- 
+
+source("3aGraphClassifTreeMethodsOnSingleSignature.R")
 
 
