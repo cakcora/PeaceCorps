@@ -115,9 +115,10 @@ extractPD<-function(dataset, dataAlias, feature){
 nodeFeatures <- c("degree","betweenness","closeness")#"eccentricity","hub","authority"
 
 nodeFeatures2 <-c("ricci","forman")
-for(f in c(nodeFeatures2)){
+for(f in c(nodeFeatures)){
   # reddit multi pds are missing. 
-  if(TRUE){
+  System.time(extractPD("proteins/proteins.","Protein",feature=f))[[1]]
+  if(FALSE){
     extractPD("NCI1/NCI1.","NCI1",feature=f)
     extractPD("ENZYMES/ENZYMES.","Enzyme",feature=f)
     extractPD("BZR/BZR.","BZR",feature=f)
@@ -126,7 +127,7 @@ for(f in c(nodeFeatures2)){
     extractPD("FRANKENSTEIN/FRANKENSTEIN.","FRANKENSTEIN",feature=f)
     #extractPD("REDDIT-MULTI-5K/REDDIT-MULTI-5K.","REDDIT5K",feature=f)
     
-    extractPD("proteins/proteins.","Protein",feature=f)
+   
     extractPD("REDDIT-BINARY/REDDIT-BINARY.","RedditBinary",feature=f)
     extractPD("IMDB-MULTI/IMDB-MULTI.","IMDBMulti",feature=f)
     
