@@ -64,7 +64,7 @@ for(fileName in c(filesFB)){
   for(bettiTarget in seq(1,10,1)){
     graph2=graph
     
-    if(ecount(graph2)<5000){
+    if(ecount(graph2)<7000){
       
       results=computeCoralTDA(graph2,bettiTarget,runTDA)
       cliqStd = results[[1]]
