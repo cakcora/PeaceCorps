@@ -5,7 +5,7 @@ library(plyr)
 rm(list = ls())
 
 pDir<-"C:/data/"
-pDir<-"/home/jupiter/PeaceCorps/CoralTda/"
+pDir<-"/home/jupiter/PeaceCorps/CoralTda/results/"
 
 social <- read.delim(paste0(pDir,"socialtimeresultsold.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
 enzyme <- read.delim(paste0(pDir,"ENZYMEStimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
