@@ -78,7 +78,7 @@ SYNTHETIC<-"SYNTHETIC/SYNTHETIC/SYNTHETIC"
 
 
 
-for(dataset in c(MSRC_21,DD,OHSU,FIRSTMM_DB,SYNTHETICnew,SYNTHETIC,redditbin)) {
+for(dataset in c(enzymes,proteins,redditbin,nc1,MSRC_21,DD,OHSU,FIRSTMM_DB,SYNTHETICnew,SYNTHETIC)) {
   ind = gregexpr(pattern ='/',dataset)[[1]]-1
   outputFile = paste0("CoralTda/results/",substr(dataset,1,ind),"cluscoeffresults.csv")
   #Check if a previous result file  exists
