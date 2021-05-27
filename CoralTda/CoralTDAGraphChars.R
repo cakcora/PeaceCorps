@@ -2,8 +2,6 @@ rm(list = ls())
 library(igraph)
 library(dplyr)
 
-options(java.parameters = "-Xmx200g")
-
 #  Graph ML datasets
 dataPath <- "/home/jupiter/GraphML/"
 
@@ -56,9 +54,10 @@ compute<-function(dataPath, dataset,outputFile){
     graph<-simplify(graph)
     #plot(graph)
     nodeCount <- vcount(graph)
+    edgeCount <- ecount(graph)
     
     clusCoeff=transitivity(graph, type = "average")
-    str=paste0(dataset,"\t",graphId,"\t",clusCoeff)
+    str=paste0(dataset,"\t",graphId,"\t",clusCoeff,"\t",nodeCount,"\t",edgeCount,"\r\n")
     write(str, file=outputFile, append=T)
   }
 }
@@ -112,8 +111,10 @@ for(fileName in c(filesFB,filesTwitter)){
   if(ecount(graph)<5000){
     
     clusCoeff=transitivity(graph, type = "average")
+    nodeCount = vcount(graph)
+    edgeCount = ecount(graph)
     fname = substr(fileName,start=1+nchar(dataPath),stop=nchar(fileName)-5)
-    str=paste0(fname,"\t",clusCoeff)
+    str=paste0(fname,"\t",clusCoeff,"\t",nodeCount,"\t",edgeCount,"\r\n")
     cat(str,file=outputFile,append=TRUE)
   }
 }
@@ -144,7 +145,9 @@ for(dataset in c("citeseer/citeseer.","cora/cora.")){
   graph<-simplify(graph)
   
   clusCoeff=transitivity(graph, type = "average")
-  str=paste0(dataset,"\t",clusCoeff)
+  nodeCount = vcount(graph)
+  edgeCount = ecount(graph)
+  str=paste0(dataset,"\t",clusCoeff,"\t",nodeCount,"\t",edgeCount,"\r\n")
   cat(str,file=outputSingleDatasetFile,append=TRUE)
   message(str)
 }
