@@ -4,7 +4,7 @@ library(TDA)
 library(dplyr)
 
 options(java.parameters = "-Xmx200g")
-
+MCRuns=30
 source("CoralTda/coralFunctions.R")
 
 #  Graph ML datasets
@@ -21,7 +21,7 @@ loadGraph<-function(edgeFile){
 }
 
 
-compute<-function(dataPath, dataset,outputFile,rep=10,maxbetti=3){
+compute<-function(dataPath, dataset,outputFile,MCRuns,maxbetti=3){
   edgeFile <- paste0(dataPath, dataset, "edges")
   if (!file.exists(edgeFile)) {
     edgeFile=paste0(dataPath, dataset, "_A.txt")
@@ -63,7 +63,7 @@ compute<-function(dataPath, dataset,outputFile,rep=10,maxbetti=3){
     for(bettiTarget in seq(1,maxbetti,1)){
       #message(graphId,":",vcount(graph)," nodes, ",ecount(graph)," edges ",bettiTarget)
       graph2=graph
-      results=computeTemporalTDA(graph2, bettiTarget,rep)
+      results=computeTemporalTDA(graph2, bettiTarget,MCRuns)
       #if(length(results)!=8)print(results)
       cliqStd = results[[1]]
       nodeStd = results[[2]]
@@ -107,14 +107,14 @@ SYNTHETIC<-"SYNTHETIC/SYNTHETIC/SYNTHETIC"
 
 
 
-for(dataset in c(MSRC_21,DD,OHSU,FIRSTMM_DB,SYNTHETICnew,SYNTHETIC,redditbin)) {
+for(dataset in c(enzymes,proteins,redditbin,nc1,MSRC_21,DD,OHSU,FIRSTMM_DB,SYNTHETICnew,SYNTHETIC)) {
   ind = gregexpr(pattern ='/',dataset)[[1]]-1
   outputFile = paste0("CoralTda/results/",substr(dataset,1,ind),"timeresults.csv")
   #Check if a previous result file  exists
   if (file.exists(outputFile)) {
     file.remove(outputFile)
   }
-  compute(dataPath, dataset,outputFile,rep=30,maxbetti=5)
+  compute(dataPath, dataset,outputFile,MCRuns,maxbetti=5)
 }
 
 
@@ -128,7 +128,7 @@ dataPathFB=paste0(dataPath,"facebook/")
 filesFB=list.files(path = dataPathFB,recursive=T, pattern = ".edges", all.files = TRUE,
                    full.names = TRUE)
 
-outputFile = "CoralTda/results/socialtimeresults.csv"#for twitter
+outputFile = "CoralTda/results/socialtimeresults.csv"
 #Check if a previous result file  exists
 if (file.exists(outputFile)) {
   file.remove(outputFile)
@@ -143,7 +143,7 @@ for(fileName in c(filesFB,filesTwitter)){
     
     if(ecount(graph2)<5000){
       
-      results=computeTemporalTDA(graph2,bettiTarget,rep=1)
+      results=computeTemporalTDA(graph2,bettiTarget,MCRuns)
       cliqStd = results[[1]]
       nodeStd = results[[2]]
       edgeStd = results[[3]]
@@ -202,7 +202,7 @@ for(bettiTarget in seq(1,maxbetti,1)){
   graph2=graph
   
     
-    results=computeTemporalTDA(graph2,bettiTarget,rep=10)
+    results=computeTemporalTDA(graph2,bettiTarget,MCRuns)
     cliqStd = results[[1]]
     nodeStd = results[[2]]
     edgeStd = results[[3]]

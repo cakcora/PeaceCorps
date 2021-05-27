@@ -51,18 +51,21 @@ computeCoralTDA<-function(graph,bettiTarget,runTDA=TRUE){
               cliqueSizeCoral,nodeCountCoral,edgeCountCoral,bettiValStd,bettiValCoral))
 }
 
-computeTemporalTDA<-function(graph,bettiTarget,rep=10){
+computeTemporalTDA<-function(graph,bettiTarget,MCRuns=10){
   nodeCountStd=vcount(graph)
   edgeCountStd = ecount(graph)
   cmplxStd <- cliques(graph, min = 1, max = bettiTarget+2)
   cliqueSizeStd=length(cmplxStd)
   bettiValStd=0
-  tstd<-system.time({
-    for(i in seq(1,rep,1)){
+  runVector<-rep(0,MCRuns)
+  for(i in seq(1,MCRuns,1)){
+    tstd<-system.time({
       Flt <- funFiltration(FUNvalues = degree(graph), cmplx = cmplxStd, sublevel = T)
       PD <- filtrationDiag(filtration = Flt, maxdimension = bettiTarget,library = 'Dionysus', location=T)$diagram
-    }
-  })[[1]]
+    })[[1]]
+    runVector[[i]]=tstd
+  }
+  
   
   vpe=PD[PD[, 1] == bettiTarget,]
   if(!inherits(vpe, "data.frame")) 
@@ -89,12 +92,15 @@ computeTemporalTDA<-function(graph,bettiTarget,rep=10){
     Fvalues = (Fvalues2[intersect(names(Fvalues2),names(V(coralGraph)))])
     if(vcount(coralGraph)!=length(Fvalues))
       message("error: ",vcount(coralGraph)," is not equal to ",length(cmplxCoral))
-    tcoral<-system.time({
-      for(i in seq(1,rep,1)){
+      runCoralVector = rep(0,MCRuns)
+      for(i in seq(1,MCRuns,1)){
+        tcoral<-system.time({
         Flt2 <- funFiltration(FUNvalues = Fvalues, cmplx = cmplxCoral, sublevel = T)
         PD2 <- filtrationDiag(filtration = Flt2, maxdimension = bettiTarget,library = 'Dionysus', location=T)$diagram
-      }
-    })[[1]]
+      })[[1]]
+        runCoralVector[[i]]=tcoral
+        
+    }
     #message(tstd," ",tcoral," seconds")
     vpd=PD2[PD2[, 1] == bettiTarget,]
     if(!inherits(vpd, "data.frame")) {
@@ -105,5 +111,5 @@ computeTemporalTDA<-function(graph,bettiTarget,rep=10){
     
   }   
   return(list(cliqueSizeStd,nodeCountStd,edgeCountStd,
-              cliqueSizeCoral,nodeCountCoral,edgeCountCoral,bettiValStd,bettiValCoral,tstd,tcoral))
+              cliqueSizeCoral,nodeCountCoral,edgeCountCoral,bettiValStd,bettiValCoral,median(tstd),median(tcoral)))
 }
