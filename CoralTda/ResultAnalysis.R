@@ -4,20 +4,23 @@ library(ggplot2)
 library(plyr)
 rm(list = ls())
 
-pDir<-"C:/data/"
-pDir<-"/home/jupiter/PeaceCorps/CoralTda/results/"
+projectDir<-"/home/jupiter/PeaceCorps/CoralTda/"
+projectDir<-"C:/Users/ert/Dropbox/Code/PeaceCorps/CoralTda/"
 
-social <- read.delim(paste0(pDir,"socialtimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
-enzyme <- read.delim(paste0(pDir,"ENZYMEStimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
-proteins <- read.delim(paste0(pDir,"proteinstimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
-redditbinary <- read.delim(paste0(pDir,"REDDIT-BINARYtimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
-nci1 <- read.delim(paste0(pDir,"NCI1timeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
-msrc_21<-read.delim(paste0(pDir,"MSRC_21timeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
-dd<-read.delim(paste0(pDir,"DDtimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
-firstmm_db<-read.delim(paste0(pDir,"FIRSTMM_DBtimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
-ohsu<-read.delim(paste0(pDir,"OHSUtimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
-synthetic<-read.delim(paste0(pDir,"SYNTHETICtimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
-syntheticnew<-read.delim(paste0(pDir,"SYNTHETICnewtimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
+outputDir<-paste0(projectDir,"results/")
+
+
+social <- read.delim(paste0(outputDir,"socialtimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
+enzyme <- read.delim(paste0(outputDir,"ENZYMEStimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
+proteins <- read.delim(paste0(outputDir,"proteinstimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
+redditbinary <- read.delim(paste0(outputDir,"REDDIT-BINARYtimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
+nci1 <- read.delim(paste0(outputDir,"NCI1timeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
+msrc_21<-read.delim(paste0(outputDir,"MSRC_21timeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
+dd<-read.delim(paste0(outputDir,"DDtimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
+firstmm_db<-read.delim(paste0(outputDir,"FIRSTMM_DBtimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
+ohsu<-read.delim(paste0(outputDir,"OHSUtimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
+synthetic<-read.delim(paste0(outputDir,"SYNTHETICtimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
+syntheticnew<-read.delim(paste0(outputDir,"SYNTHETICnewtimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
 
 
 datkernel<-dplyr::bind_rows(enzyme,redditbinary,proteins,dd,firstmm_db,ohsu,nci1,msrc_21,nci1,syntheticnew,synthetic)
@@ -46,7 +49,7 @@ datsocial$bettiNumber<-as.factor(datsocial$bettiNumber)
 datsocial$dataset <- gsub('facebook', 'FB', datsocial$dataset)
 datsocial$dataset <- gsub('twitter', 'Twitter', datsocial$dataset)
 
-singledataset<-read.delim(paste0(pDir,"singleDatasettimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
+singledataset<-read.delim(paste0(outputDir,"singleDatasettimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
 datsingle<-(singledataset)
 colnames(datsingle)<-c("dataset","bettiNumber","VStd","VCoral","EStd","ECoral","CStd","CCoral","BStd","Bcoral","timeStd","timeCoral")
 datsingle$bettiNumber<-as.factor(datsingle$bettiNumber)
@@ -59,7 +62,7 @@ dat2social<-ddply(datsocial,.(dataset,bettiNumber),summarize,t_std=sum(timeStd),
 dat2single<-ddply(datsingle,.(dataset,bettiNumber),summarize,t_std=sum(timeStd), t_coral=sum(timeCoral),E=mean(ECoral/EStd),V=mean(VCoral/VStd), C=mean(CCoral/CStd))
 
 
-picDir<-paste0(pDir,"figs")
+picDir<-paste0(projectDir,"figs")
 printPlots=T
 i=0
 for(dat2s in list(dat2kernel,dat2single,dat2social)){
@@ -125,6 +128,6 @@ p3<-ggplot(data=datsingleHigh,aes(x=avgDegree,y=BStd,group=dataset,color=dataset
   guides(color = guide_legend(override.aes = list(size=5)));p3 
 max(datsingleHigh[datsingleHigh$BStd>0&datsingleHigh$avgDegree<7,]$bettiNumber)
 
-# clustering coefficients and graphs
+
 
 
