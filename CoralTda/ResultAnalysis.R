@@ -5,9 +5,10 @@ library(plyr)
 rm(list = ls())
 
 projectDir<-"/home/jupiter/PeaceCorps/CoralTda/"
-projectDir<-"C:/Users/ert/Dropbox/Code/PeaceCorps/CoralTda/"
+projectDir<-"C:/Code/PeaceCorps/CoralTda/"
 
 outputDir<-paste0(projectDir,"results/")
+outputDir<-"C:/data/tdacoral/results/"
 
 
 social <- read.delim(paste0(outputDir,"socialtimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
