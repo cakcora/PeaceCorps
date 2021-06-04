@@ -119,12 +119,57 @@ kernelchars<-merge(datkernel,datkernelclus, by=c("dataset","graphId"))
 picDir<-paste0(projectDir,"figs")
 
 for(betti in c(1,2,3,4,5)){
-  pl=ggplot(data=kernelchars[kernelchars$bettiNumber==betti,], aes(x=cluscoeff,y=BStd))+geom_point()+labs(x ="clustering coeff", y = paste0("Betti",betti))
-  p1=(ggplot(data=kernelchars[kernelchars$bettiNumber==betti,], aes(x=E/V,y=BStd))+geom_point()+labs(x ="E/V", y = paste0("Betti",betti)))
+  pl=ggplot(data=kernelchars[kernelchars$bettiNumber==betti,], aes(x=cluscoeff,y=BStd))+geom_point()+
+    labs(x ="clustering coeff", y = paste0("Betti ",betti," count"))
+  p1=(ggplot(data=kernelchars[kernelchars$bettiNumber==betti,], aes(x=E/V,y=BStd))+geom_point()+
+        labs(x ="mean degree", y = paste0("Betti ",betti," count")))
   
   ggsave(plot=pl,file=paste0("clusCoral",betti,".png"),device="png",width=6,height=4,units=c("in"),dpi=1200,path=picDir)
   ggsave(plot=p1,file=paste0("avgCoral",betti,".png"),device="png",width=6,height=4,units=c("in"),dpi=1200,path=picDir)
   
 }
-write.csv(kernelchars,file="allclus.csv",quote=F)
+#write.csv(kernelchars,file="allclus.csv",quote=F)
 
+socialchars<-merge(datsocial,datsocialclus, by=c("dataset","graphId"))
+
+for(betti in c(1,2,3,4,5)){
+  p3=ggplot(data=socialchars[socialchars$bettiNumber==betti,], aes(x=cluscoeff,y=BStd))+geom_point(color="blue")+
+    labs(x ="clustering coeff", y = paste0("Betti ",betti," count"))+theme_minimal()+
+    theme(text = element_text(size=12),#legend.position = c(0.8, 0.8),
+          legend.text = element_text(size=12))+
+    #scale_colour_manual(name='', values=c('Large tokens'='blue','Small tokens'='red'))+
+    guides(color = guide_legend(override.aes = list(size=5)));
+  p4=(ggplot(data=socialchars[socialchars$bettiNumber==betti,], aes(x=E/V,y=BStd))+geom_point(color="blue")+
+        labs(x ="mean degree", y = paste0("Betti ",betti," count")))+theme_minimal()+
+    theme(text = element_text(size=12),#legend.position = c(0.8, 0.8),
+          legend.text = element_text(size=12))+
+    #scale_colour_manual(name='', values=c('Large tokens'='blue','Small tokens'='red'))+
+    guides(color = guide_legend(override.aes = list(size=5)));
+  print(p3)
+  print(p4)
+  ggsave(plot=p3,file=paste0("clusCoralSocial",betti,".png"),device="png",width=6,height=4,units=c("in"),dpi=1200,path=picDir)
+  ggsave(plot=p4,file=paste0("avgCoralSocial",betti,".png"),device="png",width=6,height=4,units=c("in"),dpi=1200,path=picDir)
+  
+}
+
+singlechars<-merge(datsingle,datsingleclus, by=c("dataset"))
+
+for(betti in c(1,2,3,4,5)){
+  p5=ggplot(data=singlechars[singlechars$bettiNumber==betti,], aes(x=cluscoeff,y=BStd))+geom_point(color="blue")+
+    labs(x ="clustering coeff", y = paste0("Betti ",betti," count"))+theme_minimal()+
+    theme(text = element_text(size=12),#legend.position = c(0.8, 0.8),
+          legend.text = element_text(size=12))+
+    #scale_colour_manual(name='', values=c('Large tokens'='blue','Small tokens'='red'))+
+    guides(color = guide_legend(override.aes = list(size=5)));
+  p6=(ggplot(data=singlechars[singlechars$bettiNumber==betti,], aes(x=E/V,y=BStd))+geom_point(color="blue")+
+        labs(x ="mean degree", y = paste0("Betti ",betti," count")))+theme_minimal()+
+    theme(text = element_text(size=12),#legend.position = c(0.8, 0.8),
+          legend.text = element_text(size=12))+
+    #scale_colour_manual(name='', values=c('Large tokens'='blue','Small tokens'='red'))+
+    guides(color = guide_legend(override.aes = list(size=5)));
+  print(p5)
+  print(p6)
+  ggsave(plot=p5,file=paste0("clusCoralSingle",betti,".png"),device="png",width=6,height=4,units=c("in"),dpi=1200,path=picDir)
+  ggsave(plot=p6,file=paste0("avgCoralSingle",betti,".png"),device="png",width=6,height=4,units=c("in"),dpi=1200,path=picDir)
+  
+}
