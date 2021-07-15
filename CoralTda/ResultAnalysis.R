@@ -1,14 +1,17 @@
+
+# this script requires results from coralTDA runs.
+# We plot reductions in vertex, edge, clique size and time.
 library(igraph)
 library(dplyr)
 library(ggplot2)
 library(plyr)
+library(stringr)
 rm(list = ls())
 
 projectDir<-"/home/jupiter/PeaceCorps/CoralTda/"
 projectDir<-"C:/Code/PeaceCorps/CoralTda/"
 
 outputDir<-paste0(projectDir,"results/")
-outputDir<-"C:/data/tdacoral/results/"
 
 
 social <- read.delim(paste0(outputDir,"socialtimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
@@ -24,111 +27,92 @@ synthetic<-read.delim(paste0(outputDir,"SYNTHETICtimeresults.csv"),sep="\t",head
 syntheticnew<-read.delim(paste0(outputDir,"SYNTHETICnewtimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
 
 
-datkernel<-dplyr::bind_rows(enzyme,redditbinary,proteins,dd,firstmm_db,ohsu,nci1,msrc_21,nci1,syntheticnew,synthetic)
+datkernel1<-dplyr::bind_rows(dd,enzyme,firstmm_db,nci1,ohsu)
+datkernel2<-dplyr::bind_rows(proteins,redditbinary,syntheticnew,synthetic)
 
-colnames(datkernel)<-c("dataset","graphId","bettiNumber","VStd","VCoral","EStd","ECoral","CStd","CCoral","BStd","Bcoral","timeStd","timeCoral")
-datkernel$dataset <- gsub('proteins/proteins.', 'Proteins', datkernel$dataset)
-datkernel$dataset <- gsub('DD/DD/DD', 'DD', datkernel$dataset)
-datkernel$dataset <- gsub('REDDIT-BINARY/REDDIT-BINARY.', 'Redditb', datkernel$dataset)
-datkernel$dataset <- gsub('ENZYMES/ENZYMES.', 'Enzymes', datkernel$dataset)
-datkernel$dataset <- gsub('MSRC_21/MSRC_21/MSRC_21', 'Msrc', datkernel$dataset)
-datkernel$dataset <- gsub('NCI1/NCI1.', 'NCI1', datkernel$dataset)
-datkernel$dataset <- gsub('OHSU/OHSU/OHSU', 'OHSU', datkernel$dataset)
-datkernel$dataset <- gsub('FIRSTMM_DB/FIRSTMM_DB/FIRSTMM_DB', 'FIRSTMM_DB', datkernel$dataset)
-datkernel$dataset <- gsub('SYNTHETICnew/SYNTHETICnew/SYNTHETICnew', 'SynNew', datkernel$dataset)
-datkernel$dataset <- gsub('SYNTHETIC/SYNTHETIC/SYNTHETIC', 'Syn', datkernel$dataset)
-datkernel$dataset <- gsub('NCI1/NCI1.', 'NCI1', datkernel$dataset)
-datkernel$bettiNumber<-as.factor(datkernel$bettiNumber)
+colnames(datkernel1)<-c("Dataset","graphId","bettiNumber","VStd","VCoral","EStd","ECoral","CStd","CCoral","BStd","Bcoral","timeStd","timeCoral")
+colnames(datkernel2)<-c("Dataset","graphId","bettiNumber","VStd","VCoral","EStd","ECoral","CStd","CCoral","BStd","Bcoral","timeStd","timeCoral")
+datkernel1$Dataset <- gsub('DD/DD/DD', 'DD', datkernel1$Dataset)
+datkernel1$Dataset <- gsub('ENZYMES/ENZYMES.', 'ENZYMES', datkernel1$Dataset)
+datkernel1$Dataset <- gsub('FIRSTMM_DB/FIRSTMM_DB/FIRSTMM_DB', 'FIRSTMM', datkernel1$Dataset)
+datkernel1$Dataset <- gsub('MSRC_21/MSRC_21/MSRC_21', 'MSRC', datkernel1$Dataset)
+datkernel1$Dataset <- gsub('NCI1/NCI1.', 'NCI1', datkernel1$Dataset)
+datkernel1$Dataset <- gsub('OHSU/OHSU/OHSU', 'OHSU', datkernel1$Dataset)
+
+datkernel2$Dataset <- gsub('proteins/proteins.', 'PROTEINS', datkernel2$Dataset)
+datkernel2$Dataset <- gsub('REDDIT-BINARY/REDDIT-BINARY.', 'REDDITB', datkernel2$Dataset)
+datkernel2$Dataset <- gsub('SYNTHETICnew/SYNTHETICnew/SYNTHETICnew', 'SYNNEW', datkernel2$Dataset)
+datkernel2$Dataset <- gsub('SYNTHETIC/SYNTHETIC/SYNTHETIC', 'SYN', datkernel2$Dataset)
+#datkernel2$bettiNumber<-as.factor(datkernel2$bettiNumber)
 
 datsocial<-dplyr::bind_rows(social)
-library(stringr)
 tmp<-str_split_fixed(datsocial$V1, "//", 2)
 datsocial$V0<-tmp[,1]
 datsocial$V1<-tmp[,2]
-colnames(datsocial)<-c("graphId","bettiNumber","VStd","VCoral","EStd","ECoral","CStd","CCoral","BStd","Bcoral","timeStd","timeCoral","dataset")
-datsocial$bettiNumber<-as.factor(datsocial$bettiNumber)
-datsocial$dataset <- gsub('facebook', 'FB', datsocial$dataset)
-datsocial$dataset <- gsub('twitter', 'Twitter', datsocial$dataset)
+colnames(datsocial)<-c("graphId","bettiNumber","VStd","VCoral","EStd","ECoral","CStd","CCoral","BStd","Bcoral","timeStd","timeCoral","Dataset")
+#datsocial$bettiNumber<-as.factor(datsocial$bettiNumber)
+datsocial$Dataset <- gsub('facebook', 'FACEBOOK', datsocial$Dataset)
+datsocial$Dataset <- gsub('twitter', 'TWITTER', datsocial$Dataset)
 
 singledataset<-read.delim(paste0(outputDir,"singleDatasettimeresults.csv"),sep="\t",header=F,stringsAsFactors =FALSE)
 datsingle<-(singledataset)
-colnames(datsingle)<-c("dataset","bettiNumber","VStd","VCoral","EStd","ECoral","CStd","CCoral","BStd","Bcoral","timeStd","timeCoral")
-datsingle$bettiNumber<-as.factor(datsingle$bettiNumber)
-datsingle$dataset <- gsub('citeseer/citeseer.', 'citeseer', datsingle$dataset)
-datsingle$dataset <- gsub('cora/cora.', 'cora', datsingle$dataset)
+colnames(datsingle)<-c("Dataset","bettiNumber","VStd","VCoral","EStd","ECoral","CStd","CCoral","BStd","Bcoral","timeStd","timeCoral")
+#datsingle$bettiNumber<-as.factor(datsingle$bettiNumber)
+datsingle$Dataset <- gsub('citeseer/citeseer.', 'CITESEER', datsingle$Dataset)
+datsingle$Dataset <- gsub('cora/cora.', 'CORA', datsingle$Dataset)
+datsingle<-datsingle[datsingle$bettiNumber<=5,]
 
+dat2kernel1<-ddply(datkernel1,.(Dataset,bettiNumber),summarize,t_std=sum(timeStd), t_coral=sum(timeCoral),E=mean(ECoral/EStd),V=mean(VCoral/VStd), C=mean(CCoral/CStd))
+dat2kernel2<-ddply(datkernel2,.(Dataset,bettiNumber),summarize,t_std=sum(timeStd), t_coral=sum(timeCoral),E=mean(ECoral/EStd),V=mean(VCoral/VStd), C=mean(CCoral/CStd))
+dat2social<-ddply(datsocial,.(Dataset,bettiNumber),summarize,t_std=sum(timeStd), t_coral=sum(timeCoral),E=mean(ECoral/EStd),V=mean(VCoral/VStd), C=mean(CCoral/CStd))
+dat2single<-ddply(datsingle,.(Dataset,bettiNumber),summarize,t_std=sum(timeStd), t_coral=sum(timeCoral),E=mean(ECoral/EStd),V=mean(VCoral/VStd), C=mean(CCoral/CStd))
 
-dat2kernel<-ddply(datkernel,.(dataset,bettiNumber),summarize,t_std=sum(timeStd), t_coral=sum(timeCoral),E=mean(ECoral/EStd),V=mean(VCoral/VStd), C=mean(CCoral/CStd))
-dat2social<-ddply(datsocial,.(dataset,bettiNumber),summarize,t_std=sum(timeStd), t_coral=sum(timeCoral),E=mean(ECoral/EStd),V=mean(VCoral/VStd), C=mean(CCoral/CStd))
-dat2single<-ddply(datsingle,.(dataset,bettiNumber),summarize,t_std=sum(timeStd), t_coral=sum(timeCoral),E=mean(ECoral/EStd),V=mean(VCoral/VStd), C=mean(CCoral/CStd))
+datr<-dplyr::bind_rows(dat2kernel1,dat2kernel2,dat2social,dat2single)
+datr 
 
+dat2s<-ddply(datr,.(bettiNumber),summarize,eReduction=1-mean(E), vReduction=1-mean(V),vMinReduction=1-max(V),vMaxReduction=1-min(V))
 
 picDir<-paste0(projectDir,"figs")
-printPlots=T
-i=0
-for(dat2s in list(dat2kernel,dat2single,dat2social)){
-  i=i+1
-  
-  pl<-ggplot(data=dat2s,aes(x=bettiNumber,y=1-(t_coral/t_std),group=dataset,color=dataset))+ geom_line(size=2)+
-    scale_x_discrete(name="Betti")+
-    theme_minimal()+scale_y_continuous(name=("Time gain"))+
-    theme(text = element_text(size=12),#legend.position = c(0.8, 0.8),
-          legend.text = element_text(size=12))+
-    #scale_colour_manual(name='', values=c('Large tokens'='blue','Small tokens'='red'))+
+pictureIndex=0
+for(aDataset in list(dat2kernel1,dat2kernel2,dat2single,dat2social)){
+  pictureIndex=pictureIndex+1
+  #aDataset$bettiNumber=as.numeric(aDataset$bettiNumber)
+  pl<-ggplot(data=aDataset,aes(x=bettiNumber,y=(1-(t_coral/t_std))*100,group=Dataset,color=Dataset))+ geom_line(size=2)+
+    scale_x_continuous(name="Betti dim")+
+    theme_minimal()+scale_y_continuous(name=("Time reduction (%)"))+
+    theme(text = element_text(size=22),#legend.position = c(0.8, 0.8),
+          legend.text = element_text(size=22))+
     guides(color = guide_legend(override.aes = list(size=5)));
   print(pl)
   
-  p1<-ggplot(data=dat2s,aes(x=bettiNumber,y=V,group=dataset,color=dataset))+ geom_line(size=2)+
-    scale_x_discrete(name="Betti")+
-    theme_minimal()+scale_y_continuous(name=("Vertices"))+
-    theme(text = element_text(size=12),legend.position = c(0.8, 0.8),
-          legend.text = element_text(size=12))+
-    #scale_colour_manual(name='', values=c('Large tokens'='blue','Small tokens'='red'))+
-    guides(color = guide_legend(override.aes = list(size=5)));p1;
-  p2<-ggplot(data=dat2s,aes(x=bettiNumber,y=E,group=dataset,color=dataset))+ geom_line(size=2)+
-    scale_x_discrete(name="Betti")+
-    theme_minimal()+scale_y_continuous(name=("Edges"))+
-    theme(text = element_text(size=12),legend.position = c(0.8, 0.8),
-          legend.text = element_text(size=12))+
-    #scale_colour_manual(name='', values=c('Large tokens'='blue','Small tokens'='red'))+
+  p2<-ggplot(data=aDataset,aes(x=bettiNumber,y=(1-V)*100,group=Dataset,color=Dataset))+ geom_line(size=2)+
+    scale_x_continuous(name="Betti dim")+
+    theme_minimal()+scale_y_continuous(name=("Vertex reduction (%)"))+
+    theme(text = element_text(size=22),#legend.position = c(0.8, 0.8),
+          legend.text = element_text(size=22))+
     guides(color = guide_legend(override.aes = list(size=5)));p2;
-  p3<-ggplot(data=dat2s,aes(x=bettiNumber,y=C,group=dataset,color=dataset))+ geom_line(size=2)+
-    scale_x_discrete(name="Betti")+
-    theme_minimal()+scale_y_continuous(name=("Clique size"))+
-    theme(text = element_text(size=12),legend.position = c(0.8, 0.8),
-          legend.text = element_text(size=12))+
-    #scale_colour_manual(name='', values=c('Large tokens'='blue','Small tokens'='red'))+
-    guides(color = guide_legend(override.aes = list(size=5)));p3 
+  
+  p3<-ggplot(data=aDataset,aes(x=bettiNumber,y=(1-E)*100,group=Dataset,color=Dataset))+ geom_line(size=2)+
+    scale_x_continuous(name="Betti dim")+
+    theme_minimal()+scale_y_continuous(name=("Edge reduction (%)"))+
+    theme(text = element_text(size=22),#legend.position = c(0.8, 0.8),
+          legend.text = element_text(size=22))+
+    guides(color = guide_legend(override.aes = list(size=5)));p3;
+  
+  p4<-ggplot(data=aDataset,aes(x=bettiNumber,y=(1-C)*100,group=Dataset,color=Dataset))+ geom_line(size=2)+
+    scale_x_continuous(name="Betti dim")+
+    theme_minimal()+scale_y_continuous(name=("Clique count reduction (%)"))+
+    theme(text = element_text(size=22),#legend.position = c(0.8, 0.8),
+          legend.text = element_text(size=22))+
+    guides(color = guide_legend(override.aes = list(size=5)));p4 
   
   
-  if(printPlots){
-    ggsave(plot=pl,file=paste0("tCoral",i,".png"),device="png",width=6,height=4,units=c("in"),dpi=1200,path=picDir)
-    ggsave(plot=p1,file=paste0("vCoral",i,".png"),device="png",width=6,height=4,units=c("in"),dpi=1200,path=picDir)
-    ggsave(plot=p2,file=paste0("eCoral",i,".png"),device="png",width=6,height=4,units=c("in"),dpi=1200,path=picDir)
-    ggsave(plot=p3,file=paste0("sCoral",i,".png"),device="png",width=6,height=4,units=c("in"),dpi=1200,path=picDir)
-  }
+  
+    ggsave(plot=pl,file=paste0("tCoral",pictureIndex,".png"),device="png",width=6,height=4,units=c("in"),dpi=1200,path=picDir)
+    ggsave(plot=p2,file=paste0("vCoral",pictureIndex,".png"),device="png",width=6,height=4,units=c("in"),dpi=1200,path=picDir)
+    ggsave(plot=p3,file=paste0("eCoral",pictureIndex,".png"),device="png",width=6,height=4,units=c("in"),dpi=1200,path=picDir)
+    ggsave(plot=p4,file=paste0("sCoral",pictureIndex,".png"),device="png",width=6,height=4,units=c("in"),dpi=1200,path=picDir)
+  
 }
-
-# do low edge graphs have betti>2
-
-datsingleHigh<-datkernel
-datsingleHigh<-datsocial
-datsingleHigh$bettiNumber<-as.numeric(datsingleHigh$bettiNumber)
-plot(datsingleHigh$EStd/datsingleHigh$VStd,datsingleHigh$bettiNumber)
-datsingleHigh<-datsingleHigh[datsingleHigh$bettiNumber>1,]
-plot(datsingleHigh$EStd/datsingleHigh$VStd,datsingleHigh$bettiNumber)
-datsingleHigh
-plot(datsingleHigh$EStd/datsingleHigh$VStd,datsingleHigh$BStd)
-datsingleHigh$avgDegree<-datsingleHigh$EStd/datsingleHigh$VStd
-p3<-ggplot(data=datsingleHigh,aes(x=avgDegree,y=BStd,group=dataset,color=dataset))+ geom_point(size=2)+
-  scale_x_continuous(name="Average node degree in a single graph")+
-  theme_minimal()+scale_y_continuous(name=("Value of Betti 2 and higher"))+
-  theme(text = element_text(size=12),legend.position = c(0.8, 0.8),
-        legend.text = element_text(size=12))+
-  #scale_colour_manual(name='', values=c('Large tokens'='blue','Small tokens'='red'))+
-  guides(color = guide_legend(override.aes = list(size=5)));p3 
-max(datsingleHigh[datsingleHigh$BStd>0&datsingleHigh$avgDegree<7,]$bettiNumber)
-
-
 
 
